@@ -1,0 +1,2803 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineFlix AI - Immersive Futuristic Cinema Platform</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <script>
+    const resolveImagePath = (path, size = 'w500') => {
+      if (!path) return 'assets/marvel_portal_poster.png';
+      if (path.startsWith('assets/') || path.startsWith('./assets/') || path.startsWith('http')) {
+        return path;
+      }
+      const trimmed = path.startsWith('/') ? path.slice(1) : path;
+      if (trimmed.startsWith('assets/')) {
+        return trimmed;
+      }
+      return `https://image.tmdb.org/t/p/${size}/${trimmed}`;
+    };
+
+    const handleImageError = (img) => {
+      if (img.classList.contains('img-failed')) return;
+      img.classList.add('img-failed');
+      const fallbacks = [
+        'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=600&q=80', // Sci-Fi helmet mask
+        'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80', // Gothic spotlight city
+        'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80', // Neon futuristic city
+        'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80', // Magical portal castle
+        'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80', // Bioluminescent ocean
+        'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80'  // Atmospheric cinema curtains
+      ];
+      img.src = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+    };
+
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            space: {
+              950: '#030305',
+              900: '#06060c',
+              800: '#0c0c16',
+              700: '#141424',
+              600: '#1b1b2f',
+            },
+            cyber: {
+              neon: '#a855f7',
+              cyan: '#06b6d4',
+              pink: '#ec4899',
+            }
+          },
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+            cinematic: ['Cinzel', 'serif'],
+          },
+          boxShadow: {
+            'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+            'neon-purple': '0 0 20px rgba(168, 85, 247, 0.6)',
+            'neon-cyan': '0 0 20px rgba(6, 182, 212, 0.6)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #030305;
+      color: #ffffff;
+      font-family: 'Outfit', sans-serif;
+      overflow-x: hidden;
+    }
+    
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #06060c;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #4b2382;
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #6d28d9;
+    }
+
+    .glass-card {
+      background: rgba(12, 12, 22, 0.55);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    }
+
+    .glass-navbar {
+      background: rgba(3, 3, 5, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .neon-glow-purple {
+      filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.6));
+    }
+    .neon-glow-cyan {
+      filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.6));
+    }
+    .neon-border-glow-purple {
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.5), inset 0 0 15px rgba(168, 85, 247, 0.3);
+      border-color: rgba(168, 85, 247, 0.8);
+    }
+
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .ambient-bg {
+      transition: background 1.2s ease-in-out;
+    }
+
+    .scrollbar-none::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-none {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    @keyframes spin-slow {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .animate-spin-slow {
+      animation: spin-slow 12s linear infinite;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.4)); }
+      50% { filter: drop-shadow(0 0 15px rgba(168, 85, 247, 0.8)); }
+    }
+    .animate-pulse-glow {
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding-bottom: 72px;
+      }
+    }
+  </style>
+</head>
+<body class="selection:bg-purple-600 selection:text-white">
+
+  <!-- Interactive Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- Glowing cursor element -->
+  <div id="custom-cursor" class="fixed top-0 left-0 pointer-events-none z-50 rounded-full border border-purple-500/70 bg-purple-500/10 transition-all duration-75 -translate-x-1/2 -translate-y-1/2 shadow-neon-purple hidden" style="width: 20px; height: 20px;"></div>
+
+  <!-- Ambient Dynamic Gradient Overlay -->
+  <div id="ambient-glow" class="fixed top-0 inset-x-0 h-[65vh] sm:h-[85vh] bg-gradient-to-b from-purple-900/60 to-space-950 -z-10 opacity-70 ambient-bg"></div>
+
+  <!-- Sticky Floating Glass Navbar -->
+  <nav class="sticky top-4 mx-4 z-40 glass-navbar rounded-full px-6 py-3 flex items-center justify-between shadow-neon-purple/10 border border-white/10 transition-all duration-300">
+    <!-- Brand Logo -->
+    <div class="flex items-center gap-6">
+      <div onclick="navigateTab('home')" class="flex items-center gap-2 cursor-pointer group">
+        <i data-lucide="film" class="text-purple-500 fill-purple-500/20 w-6 h-6 transition-transform group-hover:scale-110 duration-300 neon-glow-purple"></i>
+        <span class="font-cinematic font-black text-lg sm:text-2xl tracking-widest bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+          CINEFLIX
+        </span>
+      </div>
+      <!-- Quick Categories Tags -->
+      <div class="hidden lg:flex items-center gap-4 text-xs font-semibold uppercase text-gray-300">
+        <span onclick="triggerFranchiseSearch('marvel')" class="hover:text-purple-400 cursor-pointer transition-colors">Marvel</span>
+        <span onclick="triggerFranchiseSearch('dc')" class="hover:text-purple-400 cursor-pointer transition-colors">DC Universe</span>
+        <span onclick="triggerFranchiseSearch('harry potter')" class="hover:text-purple-400 cursor-pointer transition-colors">Harry Potter</span>
+        <span onclick="triggerFranchiseSearch('anime')" class="hover:text-purple-400 cursor-pointer transition-colors">Anime</span>
+      </div>
+    </div>
+
+    <!-- Center Search Bar -->
+    <div class="relative flex-1 max-w-sm sm:max-w-md mx-4">
+      <form onsubmit="handleSearch(event)" class="relative">
+        <input
+          id="search-input"
+          type="text"
+          oninput="handleSearchSuggestions(this.value)"
+          placeholder="Search movies, collections, moods..."
+          class="w-full bg-space-900/90 border border-white/10 rounded-full py-2 pl-9 pr-12 text-xs sm:text-sm text-white focus:outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/40 placeholder-gray-500 transition-all"
+        />
+        <i data-lucide="search" class="absolute left-3 top-2.5 text-gray-500 w-4 h-4"></i>
+        <!-- Voice trigger -->
+        <button type="button" onclick="startVoiceSearch()" class="absolute right-3 top-2 text-gray-500 hover:text-purple-400">
+          <i data-lucide="mic" class="w-4 h-4"></i>
+        </button>
+      </form>
+      <!-- Suggestions panel -->
+      <div id="suggestions-box" class="absolute left-0 right-0 top-full mt-2 glass-card rounded-xl border border-white/10 shadow-2xl p-2 z-50 hidden space-y-1.5"></div>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="flex items-center gap-2 sm:gap-4">
+      <!-- Live Sync Setup Gear -->
+      <button onclick="openSettingsModal()" class="p-2 rounded-full text-gray-400 hover:text-purple-400 hover:bg-white/5 transition-all" title="Synchronize Live TMDB API">
+        <i data-lucide="settings" class="w-4 h-4"></i>
+      </button>
+
+      <!-- Theme Switcher -->
+      <button onclick="toggleTheme()" class="p-2 rounded-full text-gray-400 hover:text-purple-400 hover:bg-white/5 transition-all">
+        <i id="theme-icon" data-lucide="sun" class="w-4 h-4"></i>
+      </button>
+
+      <!-- Notifications Bell -->
+      <div class="relative" id="notify-container">
+        <button onclick="toggleNotifications()" class="p-2 rounded-full text-gray-400 hover:text-purple-400 hover:bg-white/5 relative">
+          <i data-lucide="bell" class="w-4 h-4"></i>
+          <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-cyan-400 shadow-neon-cyan animate-pulse"></span>
+        </button>
+        <div id="notify-box" class="absolute right-0 top-full mt-2 w-72 glass-card border border-white/10 rounded-xl shadow-2xl p-3 z-50 hidden space-y-2 text-left animate-bounce-in">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-purple-400 border-b border-white/5 pb-1 flex items-center gap-1"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Stream Alerts</h4>
+          <div class="text-xs space-y-2">
+            <p class="text-white leading-normal">⚡ Live TMDB Synchronization Core active! Accessing 100,000+ movie nodes.</p>
+            <span class="text-[9px] text-gray-500 block">Just now</span>
+            <hr class="border-white/5">
+            <p class="text-white leading-normal">🍿 CineFlix AI compiled a fresh row of personalized recommendations for your profile.</p>
+            <span class="text-[9px] text-gray-500 block">1 hour ago</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Avatar / Login -->
+      <div id="auth-nav-block">
+        <button onclick="openAuthModal()" class="px-4 py-1.5 text-xs font-bold rounded-full border border-purple-500/40 bg-purple-500/10 text-white shadow-neon-purple hover:bg-purple-600 transition-all flex items-center gap-1.5">
+          <i data-lucide="user" class="w-3.5 h-3.5"></i>
+          <span>Sign In</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- VIEWPORTS TAB CONTAINER -->
+  <main class="relative z-10 w-full mt-6">
+    
+    <!-- Tab View: Home -->
+    <div id="tab-home" class="tab-view space-y-12">
+      <!-- Immersive Cinematic Hero Slider -->
+      <div id="hero-slider" class="w-full h-[65vh] sm:h-[80vh] relative flex items-end px-6 sm:px-16 pb-8 sm:pb-16 overflow-hidden rounded-2xl mx-auto max-w-[96vw] border border-white/5 shadow-2xl">
+        <div class="absolute inset-0 z-0">
+          <img id="hero-backdrop" src="" alt="Backdrop" class="w-full h-full object-cover opacity-35 scale-105 transition-all duration-1000" onerror="handleImageError(this)">
+          <div class="absolute inset-0 bg-gradient-to-t from-space-950 via-space-950/20 to-transparent"></div>
+          <div class="absolute inset-0 bg-gradient-to-r from-space-950/80 via-transparent to-transparent"></div>
+        </div>
+
+        <div class="max-w-2xl space-y-4 z-10 text-left">
+          <div class="bg-purple-500/20 border border-purple-500/40 text-purple-300 text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full w-fit backdrop-blur-xs shadow-neon-purple animate-pulse flex items-center gap-1">
+            <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+            <span>#1 Worldwide Trending Tonight</span>
+          </div>
+          <h1 id="hero-title" class="text-3xl sm:text-6xl font-extrabold font-cinematic tracking-wide text-white leading-tight uppercase"></h1>
+          <p id="hero-desc" class="text-gray-300 text-xs sm:text-sm line-clamp-3 max-w-xl font-light leading-relaxed"></p>
+          
+          <div class="flex gap-4 pt-4">
+            <button onclick="openTrailerModal()" class="px-6 py-2.5 sm:px-8 sm:py-3 rounded-full bg-white text-space-950 font-black text-xs sm:text-sm uppercase tracking-widest flex items-center gap-2 hover:bg-purple-200 transition-colors shadow-lg active:scale-95">
+              <i data-lucide="play" class="w-4 h-4 fill-black text-black"></i>
+              <span>Play Trailer</span>
+            </button>
+            <button id="hero-details-btn" class="px-6 py-2.5 sm:px-8 sm:py-3 rounded-full bg-white/10 hover:bg-white/15 text-white font-extrabold text-xs sm:text-sm uppercase tracking-widest border border-white/15 flex items-center gap-2 transition-colors active:scale-95">
+              <i data-lucide="info" class="w-4 h-4"></i>
+              <span>Details</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Slider dots -->
+        <div id="hero-slider-dots" class="absolute right-6 sm:right-16 bottom-6 sm:bottom-16 flex gap-2 z-10"></div>
+      </div>
+
+      <!-- Content curation shelves -->
+      <div class="px-6 sm:px-12 space-y-12 relative z-10">
+        
+        <!-- Mood Selector panel -->
+        <div class="glass-card rounded-2xl border border-white/5 p-6 space-y-4 text-left">
+          <h3 class="text-lg font-extrabold flex items-center gap-2 text-white font-cinematic uppercase tracking-wider">
+            <i data-lucide="sparkles" class="text-purple-400 w-5 h-5 animate-pulse"></i>
+            <span>Select Cinema Mood</span>
+          </h3>
+          <div class="flex flex-wrap gap-3">
+            <button onclick="selectMood('happy')" class="mood-btn px-4 py-2.5 rounded-full text-xs font-bold bg-space-900 border border-white/5 text-gray-400 hover:text-white flex items-center gap-1.5 transition-all">😊 Happy</button>
+            <button onclick="selectMood('emotional')" class="mood-btn px-4 py-2.5 rounded-full text-xs font-bold bg-space-900 border border-white/5 text-gray-400 hover:text-white flex items-center gap-1.5 transition-all">💖 Emotional</button>
+            <button onclick="selectMood('motivational')" class="mood-btn px-4 py-2.5 rounded-full text-xs font-bold bg-space-900 border border-white/5 text-gray-400 hover:text-white flex items-center gap-1.5 transition-all">🧭 Motivational</button>
+            <button onclick="selectMood('thrilled')" class="mood-btn px-4 py-2.5 rounded-full text-xs font-bold bg-space-900 border border-white/5 text-gray-400 hover:text-white flex items-center gap-1.5 transition-all">🔥 Thrilled</button>
+            <button onclick="selectMood('imaginative')" class="mood-btn px-4 py-2.5 rounded-full text-xs font-bold bg-space-900 border border-white/5 text-gray-400 hover:text-white flex items-center gap-1.5 transition-all">🚀 Imaginative</button>
+          </div>
+          <!-- Mood Results Grid -->
+          <div id="mood-results-box" class="hidden border-t border-white/5 mt-4 pt-4">
+            <div id="mood-results-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+          </div>
+        </div>
+
+        <!-- Recently Watched (Dynamic Local History Row) -->
+        <div id="recently-watched-container" class="space-y-4 text-left hidden">
+          <div class="flex justify-between items-center pr-2">
+            <h2 class="text-xl sm:text-2xl font-cinematic font-black tracking-wider text-red-500 uppercase">Continue Watching</h2>
+            <div class="flex gap-2">
+              <button onclick="scrollRow('row-recently-watched', -1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button onclick="scrollRow('row-recently-watched', 1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div id="row-recently-watched" class="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none scroll-smooth"></div>
+        </div>
+
+        <!-- 1. Personalized Recommendations / AI recommended -->
+        <div class="space-y-4 text-left">
+          <div class="flex justify-between items-center pr-2">
+            <h2 class="text-xl sm:text-2xl font-cinematic font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 uppercase">AI Recommended Movies</h2>
+            <div class="flex gap-2">
+              <button onclick="scrollRow('row-personalized', -1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button onclick="scrollRow('row-personalized', 1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div id="row-personalized" class="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none scroll-smooth"></div>
+        </div>
+
+        <!-- 2. Trending Now Slider -->
+        <div class="space-y-4 text-left">
+          <div class="flex justify-between items-center pr-2">
+            <h2 class="text-xl sm:text-2xl font-cinematic font-black tracking-wider text-white uppercase">Trending Now</h2>
+            <div class="flex gap-2">
+              <button onclick="scrollRow('row-trending', -1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button onclick="scrollRow('row-trending', 1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div id="row-trending" class="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none scroll-smooth"></div>
+        </div>
+
+        <!-- 3. Popular Slider -->
+        <div class="space-y-4 text-left">
+          <div class="flex justify-between items-center pr-2">
+            <h2 class="text-xl sm:text-2xl font-cinematic font-black tracking-wider text-white uppercase">Popular Movies</h2>
+            <div class="flex gap-2">
+              <button onclick="scrollRow('row-popular', -1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button onclick="scrollRow('row-popular', 1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div id="row-popular" class="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none scroll-smooth"></div>
+        </div>
+
+        <!-- Hollywood blockbusters Row -->
+        <div class="space-y-4 text-left">
+          <div class="flex justify-between items-center pr-2">
+            <h2 class="text-xl sm:text-2xl font-cinematic font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 uppercase">Hollywood Blockbusters</h2>
+            <div class="flex gap-2">
+              <button onclick="scrollRow('row-hollywood', -1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button onclick="scrollRow('row-hollywood', 1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div id="row-hollywood" class="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none scroll-smooth"></div>
+        </div>
+
+        <!-- Bollywood Hits Row -->
+        <div class="space-y-4 text-left">
+          <div class="flex justify-between items-center pr-2">
+            <h2 class="text-xl sm:text-2xl font-cinematic font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 uppercase">Bollywood Hits</h2>
+            <div class="flex gap-2">
+              <button onclick="scrollRow('row-bollywood', -1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button onclick="scrollRow('row-bollywood', 1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div id="row-bollywood" class="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none scroll-smooth"></div>
+        </div>
+
+        <!-- South Indian Spectacles Row -->
+        <div class="space-y-4 text-left">
+          <div class="flex justify-between items-center pr-2">
+            <h2 class="text-xl sm:text-2xl font-cinematic font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-pink-500 uppercase">South Indian Spectacles</h2>
+            <div class="flex gap-2">
+              <button onclick="scrollRow('row-southindian', -1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button onclick="scrollRow('row-southindian', 1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div id="row-southindian" class="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none scroll-smooth"></div>
+        </div>
+
+        <!-- Korean Drama Row -->
+        <div class="space-y-4 text-left">
+          <div class="flex justify-between items-center pr-2">
+            <h2 class="text-xl sm:text-2xl font-cinematic font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-500 uppercase">Korean Drama & Thrillers</h2>
+            <div class="flex gap-2">
+              <button onclick="scrollRow('row-korean', -1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button onclick="scrollRow('row-korean', 1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div id="row-korean" class="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none scroll-smooth"></div>
+        </div>
+
+        <!-- Curated Local Collections Banner -->
+        <div class="w-full rounded-2xl overflow-hidden glass-card border border-white/5 flex flex-col md:flex-row relative">
+          <div class="absolute top-2.5 left-2.5 bg-purple-600/25 border border-purple-500/40 text-purple-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-neon-purple">
+            ✨ Curated Collections
+          </div>
+          <img
+            src="assets/marvel_portal_poster.png"
+            alt="Cinematic Banner"
+            class="w-full md:w-[45%] h-[200px] md:h-[300px] object-cover opacity-80"
+            onerror="handleImageError(this)"
+          />
+          <div class="flex-1 p-6 sm:p-10 flex flex-col justify-center space-y-4 bg-gradient-to-r md:from-space-950 md:to-transparent text-left">
+            <h2 class="text-2xl sm:text-3xl font-cinematic font-extrabold tracking-wide">
+              DISCOVER LOCAL AI SELECTIONS
+            </h2>
+            <p class="text-gray-400 text-xs sm:text-sm font-light leading-relaxed max-w-md">
+              Step into the Quantum MCU Portal. We have integrated local collections and synchronized TMDB feeds to unlock movie pipelines, chronologies, and trailers instantly!
+            </p>
+            <button
+              onclick="triggerFranchiseSearch('marvel')"
+              class="px-6 py-2.5 rounded-full bg-purple-600 text-white font-extrabold text-xs tracking-wider uppercase w-fit hover:bg-purple-500 shadow-neon-purple active:scale-95 transition-all"
+            >
+              Enter MCU Timeline
+            </button>
+          </div>
+        </div>
+
+        <!-- FRANCHISE SHELVES -->
+
+        <!-- Marvel Collection Row -->
+        <div class="space-y-4 text-left">
+          <div class="flex justify-between items-center pr-2">
+            <h2 class="text-xl sm:text-2xl font-cinematic font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-pink-500 uppercase">Marvel Studios Collection</h2>
+            <div class="flex gap-2">
+              <button onclick="scrollRow('row-marvel', -1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button onclick="scrollRow('row-marvel', 1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div id="row-marvel" class="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none scroll-smooth"></div>
+        </div>
+
+        <!-- DC Universe Row -->
+        <div class="space-y-4 text-left">
+          <div class="flex justify-between items-center pr-2">
+            <h2 class="text-xl sm:text-2xl font-cinematic font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500 uppercase">DC Comics Universe</h2>
+            <div class="flex gap-2">
+              <button onclick="scrollRow('row-dc', -1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button onclick="scrollRow('row-dc', 1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div id="row-dc" class="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none scroll-smooth"></div>
+        </div>
+
+        <!-- Harry Potter Row -->
+        <div class="space-y-4 text-left">
+          <div class="flex justify-between items-center pr-2">
+            <h2 class="text-xl sm:text-2xl font-cinematic font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-500 uppercase">Harry Potter Saga</h2>
+            <div class="flex gap-2">
+              <button onclick="scrollRow('row-harrypotter', -1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button onclick="scrollRow('row-harrypotter', 1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div id="row-harrypotter" class="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none scroll-smooth"></div>
+        </div>
+
+        <!-- Fast & Furious Row -->
+        <div class="space-y-4 text-left">
+          <div class="flex justify-between items-center pr-2">
+            <h2 class="text-xl sm:text-2xl font-cinematic font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-gray-400 to-slate-400 uppercase">Fast & Furious Franchise</h2>
+            <div class="flex gap-2">
+              <button onclick="scrollRow('row-fastfurious', -1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button onclick="scrollRow('row-fastfurious', 1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div id="row-fastfurious" class="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none scroll-smooth"></div>
+        </div>
+
+        <!-- Avatar Row -->
+        <div class="space-y-4 text-left">
+          <div class="flex justify-between items-center pr-2">
+            <h2 class="text-xl sm:text-2xl font-cinematic font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-500 uppercase">Avatar Pandora Chronicles</h2>
+            <div class="flex gap-2">
+              <button onclick="scrollRow('row-avatar', -1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button onclick="scrollRow('row-avatar', 1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div id="row-avatar" class="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none scroll-smooth"></div>
+        </div>
+
+        <!-- Anime collection Row -->
+        <div class="space-y-4 text-left">
+          <div class="flex justify-between items-center pr-2">
+            <h2 class="text-xl sm:text-2xl font-cinematic font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400 uppercase">Anime Masterpieces</h2>
+            <div class="flex gap-2">
+              <button onclick="scrollRow('row-anime', -1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button onclick="scrollRow('row-anime', 1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div id="row-anime" class="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none scroll-smooth"></div>
+        </div>
+
+        <!-- Sci-Fi collection Row -->
+        <div class="space-y-4 text-left">
+          <div class="flex justify-between items-center pr-2">
+            <h2 class="text-xl sm:text-2xl font-cinematic font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 uppercase">Sci-Fi Masterpieces</h2>
+            <div class="flex gap-2">
+              <button onclick="scrollRow('row-scifi', -1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button onclick="scrollRow('row-scifi', 1)" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div id="row-scifi" class="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none scroll-smooth"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab View: Search -->
+    <div id="tab-search" class="tab-view space-y-8 px-6 sm:px-12 py-8 hidden text-left animate-fade-in">
+      <div class="max-w-7xl mx-auto space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/5 pb-4 gap-4">
+          <div>
+            <h1 class="text-2xl sm:text-4xl font-extrabold tracking-wide flex items-center gap-2">
+              <i data-lucide="film" class="text-purple-500 fill-purple-500/10"></i>
+              <span>AI Search Results</span>
+            </h1>
+            <p class="text-xs sm:text-sm text-gray-400 mt-1.5">
+              Vector matching query: <strong id="search-query-value" class="text-purple-400 font-mono">""</strong>
+            </p>
+          </div>
+          <div id="timeline-badge" class="bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full hidden flex items-center gap-1.5 shadow-neon-cyan">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 animate-pulse"></i>
+            <span>Chronological timeline view activated</span>
+          </div>
+        </div>
+
+        <!-- grid view -->
+        <div id="search-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6"></div>
+        
+        <!-- timeline view -->
+        <div id="search-timeline-container" class="relative border-l border-purple-500/30 ml-4 pl-6 sm:pl-10 space-y-12 py-4 hidden"></div>
+
+        <!-- empty state -->
+        <div id="search-empty-box" class="hidden flex flex-col items-center justify-center text-center p-12 glass-card rounded-2xl border border-white/5 space-y-4 max-w-md mx-auto my-12 animate-pulse">
+          <div class="p-4 bg-purple-600/10 border border-purple-500/30 rounded-full text-purple-400">
+            <i data-lucide="help-circle" class="w-8 h-8"></i>
+          </div>
+          <h3 class="text-lg font-bold">No Movies Match Vector</h3>
+          <p class="text-xs text-gray-400 leading-relaxed font-light">CineFlix AI couldn't find matches. Try searching wider tags like "Action", "Anime", "Avatar", or "Marvel"!</p>
+          <button onclick="navigateTab('home')" class="px-6 py-2 bg-purple-600 text-white font-extrabold text-xs tracking-wider uppercase rounded-full shadow-neon-purple hover:scale-102 transition-all">Back to Home</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab View: Profile -->
+    <div id="tab-profile" class="tab-view px-6 sm:px-12 py-8 hidden text-left">
+      <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- left -->
+        <div class="space-y-6">
+          <div class="glass-card rounded-2xl border border-white/5 p-6 flex flex-col items-center text-center space-y-4 shadow-glass">
+            <div class="relative">
+              <div class="absolute inset-0 bg-gradient-to-tr from-purple-500 to-cyan-400 rounded-full blur opacity-40"></div>
+              <img id="profile-avatar" src="" alt="Avatar" class="w-24 h-24 rounded-full border-2 border-purple-500 object-cover relative z-10 shadow-neon-purple" onerror="handleImageError(this)">
+            </div>
+            <div>
+              <h2 id="profile-name" class="text-xl font-bold text-white"></h2>
+              <span id="profile-email" class="text-[10px] text-gray-500 block uppercase tracking-widest mt-0.5"></span>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 w-full pt-4 border-t border-white/5">
+              <div>
+                <span id="watchlist-count" class="text-sm font-black text-purple-400 block">0</span>
+                <span class="text-[9px] text-gray-500 uppercase font-bold tracking-wider">Watchlist</span>
+              </div>
+              <div>
+                <span id="favorites-count" class="text-sm font-black text-cyan-400 block">0</span>
+                <span class="text-[9px] text-gray-500 uppercase font-bold tracking-wider">Favorites</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI preference curve -->
+          <div class="glass-card rounded-2xl border border-white/5 p-6 space-y-4">
+            <h3 class="text-sm font-extrabold uppercase tracking-wider text-purple-400 border-b border-white/5 pb-2 flex items-center gap-1.5">
+              <i data-lucide="pie-chart" class="w-4 h-4 animate-pulse"></i>
+              <span>AI Preference Vector</span>
+            </h3>
+            <div class="space-y-3.5 text-xs">
+              <div class="space-y-1">
+                <div class="flex justify-between"><span class="text-white">Action & Sci-Fi</span><span class="text-gray-400 font-mono">85% Match</span></div>
+                <div class="w-full h-2 rounded-full bg-space-900 overflow-hidden"><div class="h-full bg-cyan-500 rounded-full shadow-neon-cyan" style="width: 85%"></div></div>
+              </div>
+              <div class="space-y-1">
+                <div class="flex justify-between"><span class="text-white">Marvel Cinematic</span><span class="text-gray-400 font-mono">75% Match</span></div>
+                <div class="w-full h-2 rounded-full bg-space-900 overflow-hidden"><div class="h-full bg-purple-500 rounded-full shadow-neon-purple" style="width: 75%"></div></div>
+              </div>
+              <div class="space-y-1">
+                <div class="flex justify-between"><span class="text-white">Japanese Anime</span><span class="text-gray-400 font-mono">60% Match</span></div>
+                <div class="w-full h-2 rounded-full bg-space-900 overflow-hidden"><div class="h-full bg-pink-500 rounded-full" style="width: 60%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- right -->
+        <div class="lg:col-span-2 space-y-6">
+          <div class="glass-card rounded-2xl border border-white/5 p-6 space-y-4">
+            <div class="flex border-b border-white/5 pb-3 gap-6">
+              <button onclick="setProfileTab('watchlist')" id="prof-btn-watchlist" class="text-xs font-bold uppercase tracking-wider text-white border-b-2 border-purple-500 pb-1">Watchlist</button>
+              <button onclick="setProfileTab('favorites')" id="prof-btn-favorites" class="text-xs font-bold uppercase tracking-wider text-gray-500 pb-1">Favorites</button>
+            </div>
+            
+            <div id="profile-tab-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
+            <div id="profile-tab-empty" class="hidden text-xs text-gray-500 text-center py-12">Your collection is empty! Select movies to build your library.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab View: Admin -->
+    <div id="tab-admin" class="tab-view px-6 sm:px-12 py-8 hidden text-left max-w-7xl mx-auto space-y-8">
+      <div class="flex items-center gap-3 border-b border-white/5 pb-4">
+        <div class="p-2.5 bg-purple-600/10 border border-purple-500/30 rounded-xl text-purple-400 shadow-neon-purple">
+          <i data-lucide="shield" class="w-5.5 h-5.5 animate-pulse"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl sm:text-4xl font-extrabold tracking-wide font-cinematic text-white uppercase">CineFlix Ops Center</h1>
+          <span class="text-[10px] sm:text-xs text-cyan-300 font-extrabold tracking-widest uppercase">Platform diagnostics & live synchronizations</span>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+        <div class="glass-card rounded-2xl p-5 relative overflow-hidden flex flex-col">
+          <span class="text-[10px] text-gray-400 font-extrabold uppercase block">Database Nodes</span>
+          <span class="text-2xl sm:text-3xl font-black text-white mt-4 block">15,482</span>
+        </div>
+        <div class="glass-card rounded-2xl p-5 relative overflow-hidden flex flex-col">
+          <span class="text-[10px] text-gray-400 font-extrabold uppercase block">AI Vector Searches</span>
+          <span class="text-2xl sm:text-3xl font-black text-white mt-4 block">48,240</span>
+        </div>
+        <div class="glass-card rounded-2xl p-5 relative overflow-hidden flex flex-col">
+          <span class="text-[10px] text-gray-400 font-extrabold uppercase block">Audience Ratings</span>
+          <span class="text-2xl sm:text-3xl font-black text-white mt-4 block">12,682</span>
+        </div>
+        <div class="glass-card rounded-2xl p-5 relative overflow-hidden flex flex-col">
+          <span class="text-[10px] text-gray-400 font-extrabold uppercase block">TMDB Sync Status</span>
+          <span id="admin-sync-status" class="text-2xl sm:text-3xl font-black text-green-400 mt-4 block">ONLINE</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+        <!-- Hot Trends -->
+        <div class="glass-card rounded-2xl p-6 space-y-4">
+          <h3 class="text-sm font-extrabold uppercase text-purple-400 flex items-center gap-1.5">
+            <i data-lucide="line-chart" class="w-4 h-4"></i>
+            <span>Hot Query Vectors</span>
+          </h3>
+          <div class="space-y-3">
+            <div class="flex justify-between bg-white/5 px-4 py-3 rounded-xl text-xs"><span class="font-bold">#1 "Marvel chronological timeline"</span><span class="text-purple-300 font-bold">428 queries</span></div>
+            <div class="flex justify-between bg-white/5 px-4 py-3 rounded-xl text-xs"><span class="font-bold">#2 "Avatar sequel teasers"</span><span class="text-purple-300 font-bold">296 queries</span></div>
+            <div class="flex justify-between bg-white/5 px-4 py-3 rounded-xl text-xs"><span class="font-bold">#3 "Anime temporal romance"</span><span class="text-purple-300 font-bold">184 queries</span></div>
+          </div>
+        </div>
+
+        <!-- Terminal diagnosis logs -->
+        <div class="glass-card rounded-2xl p-6 space-y-4">
+          <h3 class="text-sm font-extrabold uppercase text-cyan-400 flex items-center gap-1.5">
+            <i data-lucide="terminal" class="w-4 h-4"></i>
+            <span>Systems log diagnostic stream</span>
+          </h3>
+          <div id="admin-terminal" class="bg-black/60 border border-white/5 rounded-xl p-4 font-mono text-[10px] sm:text-xs text-green-400 min-h-[160px] max-h-[160px] overflow-y-auto space-y-1 text-left"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MOVIE DETAILS PREMIUM CINEMATIC OVERLAY MODAL -->
+  <div id="movie-details-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-space-950/80 backdrop-blur-md overflow-y-auto hidden">
+    <div class="absolute inset-0 z-0 bg-gradient-radial from-purple-800/40 via-transparent to-transparent scale-150 pointer-events-none"></div>
+    <!-- Modal Box -->
+    <div id="modal-content-box" class="w-full max-w-4xl glass-card rounded-2xl overflow-hidden shadow-2xl z-10 border border-white/10 flex flex-col relative my-8 max-h-[85vh] sm:max-h-[90vh]">
+      <button onclick="closeMovieDetails()" class="absolute top-4 right-4 z-30 p-2.5 rounded-full bg-space-950/80 border border-white/10 text-white hover:bg-space-900 transition-colors">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+
+      <div class="overflow-y-auto flex-1 text-left">
+        <!-- Banner backdrop -->
+        <div class="h-[200px] sm:h-[320px] w-full relative">
+          <img id="modal-banner-img" src="" alt="Banner" class="w-full h-full object-cover" onerror="handleImageError(this)">
+          <div class="absolute inset-0 bg-gradient-to-t from-space-950 via-space-950/40 to-transparent"></div>
+          <!-- Trailer autoplay/popup button -->
+          <div class="absolute inset-0 flex items-center justify-center">
+            <button id="modal-play-trailer" class="px-6 py-2.5 rounded-full bg-purple-600/90 text-white flex items-center gap-2 hover:bg-purple-500 shadow-neon-purple transition-all hover:scale-105 active:scale-95">
+              <i data-lucide="play" class="w-4 h-4 fill-white text-white"></i>
+              <span class="font-bold text-xs uppercase tracking-wider">Play Fullscreen</span>
+            </button>
+          </div>
+          
+          <!-- Banner Title -->
+          <div class="absolute bottom-4 left-6 right-6">
+            <h1 id="modal-title" class="text-xl sm:text-4xl font-extrabold font-cinematic text-white leading-tight uppercase"></h1>
+            <div class="flex items-center gap-3 text-xs text-gray-300 mt-2">
+              <span id="modal-vote" class="text-amber-400 font-black">★ 8.5</span>
+              <span>|</span>
+              <span id="modal-year">2024</span>
+              <span>|</span>
+              <span id="modal-genre-tag" class="bg-white/10 px-2.5 py-0.5 rounded text-[10px] sm:text-xs">Action</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          <!-- synopsis and timelines -->
+          <div class="md:col-span-2 space-y-6">
+            <div class="space-y-1">
+              <h3 class="text-sm font-bold text-purple-400 uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="align-left" class="w-4 h-4"></i> Synopsis</h3>
+              <p id="modal-overview" class="text-gray-300 text-xs sm:text-sm font-light leading-relaxed"></p>
+            </div>
+            
+            <!-- Embedded Trailer Player Section -->
+            <div id="modal-trailer-player-block" class="space-y-2 hidden">
+              <h3 class="text-sm font-bold text-purple-400 uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="video" class="w-4 h-4"></i> Official Trailer Player</h3>
+              <div class="w-full aspect-video rounded-xl overflow-hidden border border-white/10 glass-card">
+                <iframe id="modal-trailer-iframe" class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+              </div>
+            </div>
+
+            <!-- Cast photos row -->
+            <div class="space-y-2">
+              <h3 class="text-sm font-bold text-purple-400 uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="users" class="w-4 h-4"></i> Leading Cast</h3>
+              <div id="modal-cast-row-live" class="flex gap-3 overflow-x-auto pb-2 scrollbar-none pt-1"></div>
+            </div>
+
+            <!-- Director -->
+            <div class="bg-white/5 border border-white/5 p-3 rounded-xl flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-purple-600/35 flex items-center justify-center text-purple-300 font-bold text-xs uppercase">D</div>
+              <div>
+                <span class="text-[9px] text-gray-400 block uppercase font-extrabold">Director</span>
+                <span id="modal-director" class="text-xs font-bold text-white block"></span>
+              </div>
+            </div>
+
+            <!-- Screenshot gallery section & Scenes carousel -->
+            <div id="modal-scenes-carousel-box" class="space-y-3 hidden">
+              <h3 class="text-sm font-bold text-purple-400 uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="image" class="w-4 h-4"></i> Movie Scenes Gallery</h3>
+              <div class="relative w-full aspect-video overflow-hidden rounded-xl border border-white/10 glass-card group">
+                <div id="modal-scenes-carousel-inner" class="flex transition-transform duration-500 h-full"></div>
+                <!-- Arrow controls -->
+                <button onclick="slideScenes(-1)" class="absolute left-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-space-950/70 border border-white/10 text-white hover:bg-space-900 opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="chevron-left" class="w-4.5 h-4.5"></i></button>
+                <button onclick="slideScenes(1)" class="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-space-950/70 border border-white/10 text-white hover:bg-space-900 opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="chevron-right" class="w-4.5 h-4.5"></i></button>
+              </div>
+            </div>
+
+            <!-- Franchise timeline section -->
+            <div id="modal-franchise-timeline-box" class="space-y-3 hidden">
+              <h3 id="modal-franchise-title" class="text-sm font-bold text-purple-400 uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="git-commit" class="w-4 h-4"></i> Franchise Chronology</h3>
+              <div id="modal-franchise-row-timeline" class="flex gap-6 overflow-x-auto pb-4 pt-2 px-2 scrollbar-none items-center scroll-smooth"></div>
+            </div>
+
+            <!-- Similar movies section -->
+            <div id="modal-similar-box" class="space-y-3 hidden">
+              <h3 class="text-sm font-bold text-purple-400 uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="layers" class="w-4 h-4"></i> Similar Masterpieces</h3>
+              <div id="modal-similar-row" class="flex gap-4 overflow-x-auto pb-3 pt-1 scrollbar-none"></div>
+            </div>
+          </div>
+
+          <!-- watchlist saves, availability, reviews -->
+          <div class="space-y-6">
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="toggleWatchlistModal()" id="modal-watchlist-btn" class="py-2.5 rounded-full text-xs font-bold border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center gap-1.5 text-gray-300 transition-all"></button>
+              <button onclick="toggleFavoriteModal()" id="modal-favorite-btn" class="py-2.5 rounded-full text-xs font-bold border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center gap-1.5 text-gray-300 transition-all"></button>
+            </div>
+
+            <!-- Streaming Availabilities Badges -->
+            <div class="glass-card rounded-xl p-4 border border-white/5 space-y-2.5">
+              <span class="text-xs font-extrabold text-purple-400 uppercase flex items-center gap-1"><i data-lucide="tv" class="w-3.5 h-3.5"></i> Stream Availability</span>
+              <div id="modal-streaming-row" class="flex flex-wrap gap-1.5"></div>
+            </div>
+
+            <!-- reviews -->
+            <div class="space-y-3">
+              <span class="text-xs font-extrabold text-purple-400 uppercase flex items-center gap-1"><i data-lucide="star" class="w-3.5 h-3.5 fill-purple-400"></i> Audience Reviews</span>
+              <!-- submit form -->
+              <div class="relative" id="modal-review-form-block">
+                <input id="modal-comment-input" type="text" placeholder="Add your cinematic review..." class="w-full bg-space-900 border border-white/10 rounded-full px-4 py-2 text-xs text-white focus:outline-none focus:border-purple-500/50 pr-8">
+                <button onclick="postMovieReview()" class="absolute right-2 top-1.5 p-1 text-purple-400 hover:text-purple-300"><i data-lucide="send" class="w-3.5 h-3.5"></i></button>
+              </div>
+              <div id="modal-reviews-list" class="space-y-2 max-h-[160px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- YOUTUBE VIDEO TRAILER popup modal -->
+  <div id="youtube-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm hidden">
+    <div class="relative w-full max-w-4xl aspect-video glass-card border-none rounded-2xl overflow-hidden shadow-neon-purple">
+      <button onclick="closeTrailerModal()" class="absolute top-4 right-4 p-2.5 rounded-full bg-space-950/80 border border-white/10 text-white hover:bg-space-900 transition-all z-10">
+        <i data-lucide="x" class="w-4.5 h-4.5"></i>
+      </button>
+      <iframe id="youtube-iframe" class="w-full h-full" src="" title="Trailer" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+    </div>
+  </div>
+
+  <!-- SETTINGS GEAR MODAL (TMDB CONFIG) -->
+  <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
+    <div class="w-full max-w-sm glass-card rounded-2xl p-6 sm:p-8 shadow-2xl relative border border-white/10 text-center animate-bounce-in">
+      <button onclick="closeSettingsModal()" class="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-white">
+        <i data-lucide="x" class="w-4.5 h-4.5"></i>
+      </button>
+
+      <div class="flex justify-center mb-2">
+        <div class="p-3 bg-cyan-600/10 border border-cyan-500/30 rounded-full text-cyan-400 animate-spin-slow">
+          <i data-lucide="settings" class="w-6 h-6"></i>
+        </div>
+      </div>
+
+      <h2 class="text-xl sm:text-2xl font-cinematic font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">API Synchronization</h2>
+      <p class="text-[10px] sm:text-xs text-gray-400 mt-1">Synchronize live movie assets & official trailers</p>
+
+      <form onsubmit="handleSaveSettings(event)" class="mt-6 space-y-4 text-left">
+        <div>
+          <label class="text-[10px] text-gray-400 uppercase font-extrabold block mb-1">TMDB API Key (v3)</label>
+          <input id="settings-tmdb-input" type="text" placeholder="Paste your TMDB API Key..." class="w-full bg-space-900 border border-white/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500/50">
+        </div>
+        
+        <div class="flex gap-2">
+          <button type="submit" class="flex-1 py-2.5 bg-gradient-to-r from-cyan-500 to-purple-600 font-semibold rounded-full shadow-neon-cyan text-xs text-white uppercase tracking-widest font-black">Save Sync</button>
+          <button type="button" onclick="useGuestApiKey()" class="py-2.5 px-4 bg-white/10 border border-white/5 hover:bg-white/15 text-xs rounded-full font-bold uppercase tracking-wider text-white">Guest Key</button>
+        </div>
+      </form>
+
+      <div class="mt-3 bg-purple-900/10 border border-purple-500/20 px-3 py-2 rounded-lg text-left leading-normal text-[9px] text-gray-400">
+        <span>💡 Enter your TMDB Key to load unlimited live movies, reviews, and high-fidelity trailers dynamically. Or click **Guest Key** to use our built-in sync core.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- VOICE SEARCH OVERLAY -->
+  <div id="voice-overlay" class="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 bg-space-950/85 backdrop-blur-md hidden text-center">
+    <div class="glass-card rounded-3xl p-8 sm:p-12 border border-purple-500/40 shadow-2xl relative max-w-sm w-full flex flex-col items-center justify-center space-y-6">
+      <button onclick="closeVoiceSearch()" class="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white">
+        <i data-lucide="x" class="w-4.5 h-4.5"></i>
+      </button>
+      
+      <div class="relative flex items-center justify-center">
+        <div class="absolute w-24 h-24 bg-purple-500/20 rounded-full animate-ping"></div>
+        <div class="absolute w-20 h-20 bg-purple-500/30 rounded-full animate-pulse shadow-neon-purple"></div>
+        <div class="w-16 h-16 rounded-full bg-purple-600 border border-purple-500 flex items-center justify-center text-white relative z-10 shadow-lg">
+          <i data-lucide="mic" class="w-7 h-7 fill-white/10"></i>
+        </div>
+      </div>
+      
+      <div>
+        <h3 class="text-lg font-cinematic font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">CineFlix Voice Search</h3>
+        <p id="voice-status-text" class="text-xs text-gray-400 mt-1 font-light uppercase tracking-wider animate-pulse">Say a movie name or genre...</p>
+      </div>
+      
+      <!-- wave indicator grid -->
+      <div class="flex gap-1.5 h-10 items-end justify-center">
+        <div class="wave-bar bg-purple-500 w-1 h-3 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+        <div class="wave-bar bg-cyan-400 w-1 h-6 rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
+        <div class="wave-bar bg-purple-500 w-1 h-8 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+        <div class="wave-bar bg-pink-500 w-1 h-10 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+        <div class="wave-bar bg-cyan-400 w-1 h-7 rounded-full animate-bounce" style="animation-delay: 0.15s"></div>
+        <div class="wave-bar bg-purple-500 w-1 h-4 rounded-full animate-bounce" style="animation-delay: 0.35s"></div>
+        <div class="wave-bar bg-pink-500 w-1 h-2 rounded-full animate-bounce" style="animation-delay: 0.05s"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GLOBAL NETFLIX HOVER PREVIEW -->
+  <div id="hover-preview-card" class="fixed z-50 rounded-xl overflow-hidden glass-card shadow-2xl border border-white/10 pointer-events-auto transition-all duration-300 scale-95 opacity-0 hidden" style="width: 260px;">
+    <div class="relative w-full aspect-video bg-space-950 overflow-hidden">
+      <div id="hover-preview-video-container" class="w-full h-full pointer-events-none scale-105"></div>
+      <img id="hover-preview-backdrop" src="" alt="Backdrop" class="absolute inset-0 w-full h-full object-cover z-0" onerror="handleImageError(this)">
+      <div class="absolute inset-0 bg-gradient-to-t from-space-950 to-transparent z-10"></div>
+      
+      <button onclick="triggerPreviewPlay()" class="absolute bottom-2 left-2.5 z-20 w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all">
+        <i data-lucide="play" class="w-4.5 h-4.5 fill-black pl-0.5" style="fill: #000;"></i>
+      </button>
+      <button onclick="triggerPreviewFavorite()" class="absolute bottom-2 right-12 z-20 w-8 h-8 rounded-full bg-white/15 border border-white/10 text-white flex items-center justify-center hover:bg-white/20 active:scale-95 transition-all">
+        <i id="hover-preview-fav-icon" data-lucide="heart" class="w-4 h-4"></i>
+      </button>
+      <button onclick="triggerPreviewWatchlist()" class="absolute bottom-2 right-2.5 z-20 w-8 h-8 rounded-full bg-white/15 border border-white/10 text-white flex items-center justify-center hover:bg-white/20 active:scale-95 transition-all">
+        <i id="hover-preview-wl-icon" data-lucide="plus" class="w-4 h-4"></i>
+      </button>
+    </div>
+    <div class="p-4 space-y-2 text-left bg-space-950">
+      <h4 id="hover-preview-title" class="text-white text-sm font-bold truncate"></h4>
+      <div class="flex items-center gap-2 text-[10px]">
+        <span id="hover-preview-rating" class="text-green-400 font-extrabold">95% Match</span>
+        <span id="hover-preview-year" class="text-gray-400">2024</span>
+        <span class="border border-white/30 text-white text-[8px] px-1 rounded font-bold uppercase tracking-wider">HD</span>
+      </div>
+      <div id="hover-preview-genres" class="flex flex-wrap gap-1.5 pt-0.5"></div>
+    </div>
+  </div>
+
+  <!-- RESPONSIVE MOBILE BOTTOM NAVIGATION BAR -->
+  <div class="fixed bottom-0 inset-x-0 z-40 bg-space-950/80 backdrop-blur-xl border-t border-white/5 py-2 px-6 flex justify-between items-center sm:hidden shadow-2xl">
+    <button onclick="navigateTab('home')" class="mobile-nav-btn flex flex-col items-center gap-0.5 text-purple-400 group">
+      <i data-lucide="home" class="w-5 h-5"></i>
+      <span class="text-[9px] uppercase font-extrabold tracking-wider">Home</span>
+    </button>
+    <button onclick="navigateTab('search')" class="mobile-nav-btn flex flex-col items-center gap-0.5 text-gray-400 group hover:text-purple-400">
+      <i data-lucide="search" class="w-5 h-5"></i>
+      <span class="text-[9px] uppercase font-extrabold tracking-wider">Search</span>
+    </button>
+    <button onclick="toggleChatbot()" class="mobile-nav-btn flex flex-col items-center gap-0.5 text-gray-400 group hover:text-purple-400">
+      <i data-lucide="message-square" class="w-5 h-5"></i>
+      <span class="text-[9px] uppercase font-extrabold tracking-wider">Advisor</span>
+    </button>
+    <button onclick="navigateTab('profile'); renderProfileTabContent();" class="mobile-nav-btn flex flex-col items-center gap-0.5 text-gray-400 group hover:text-purple-400">
+      <i data-lucide="user" class="w-5 h-5"></i>
+      <span class="text-[9px] uppercase font-extrabold tracking-wider">Profile</span>
+    </button>
+    <button onclick="openSettingsModal()" class="mobile-nav-btn flex flex-col items-center gap-0.5 text-gray-400 group hover:text-purple-400">
+      <i data-lucide="settings" class="w-5 h-5"></i>
+      <span class="text-[9px] uppercase font-extrabold tracking-wider">Sync API</span>
+    </button>
+  </div>
+
+  <!-- AI CHATBOT bubble widget -->
+  <div class="fixed bottom-20 right-6 sm:bottom-6 sm:right-6 z-40 flex flex-col items-end">
+    <!-- Chat expanded panel -->
+    <div id="chatbot-deck" class="w-[320px] sm:w-[400px] h-[450px] sm:h-[480px] glass-card rounded-2xl border border-purple-500/40 shadow-2xl flex flex-col overflow-hidden mb-4 hidden">
+      <!-- header -->
+      <div class="bg-gradient-to-r from-purple-800 to-indigo-900 px-4 py-3 border-b border-purple-500/20 flex items-center justify-between">
+        <div class="flex items-center gap-2 text-left">
+          <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-400/40">
+            <i data-lucide="brain-circuit" class="text-purple-300 w-4.5 h-4.5 animate-pulse-glow"></i>
+          </div>
+          <div>
+            <h3 class="text-white text-xs sm:text-sm font-extrabold tracking-wide">CineFlix AI assistant</h3>
+            <span class="text-[9px] text-cyan-300 uppercase font-bold block">NLP Recommendation core</span>
+          </div>
+        </div>
+        <button onclick="toggleChatbot()" class="p-1 rounded-full hover:bg-white/10 text-white/70 hover:text-white">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- list logs -->
+      <div id="chatbot-logs" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+
+      <!-- input form footer -->
+      <form onsubmit="handleChatbotSubmit(event)" class="p-3 border-t border-white/5 bg-space-950/40 flex gap-2">
+        <input id="chatbot-input" type="text" placeholder="Ask about movies, directors, franchises..." class="flex-1 bg-space-900 border border-white/10 rounded-full px-4 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-purple-500/50">
+        <button type="submit" class="p-2 rounded-full bg-purple-600 text-white shadow-neon-purple hover:bg-purple-500 transition-colors">
+          <i data-lucide="send" class="w-4 h-4"></i>
+        </button>
+      </form>
+    </div>
+
+    <!-- Floating button bubble -->
+    <button onclick="toggleChatbot()" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-neon-purple border border-purple-500/40 hover:scale-105 active:scale-95 transition-all">
+      <i id="chatbot-icon" data-lucide="message-square" class="w-5.5 h-5.5"></i>
+    </button>
+  </div>
+
+  <!-- AUTH FORM MODAL -->
+  <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
+    <div class="w-full max-w-sm glass-card rounded-2xl p-6 sm:p-8 shadow-2xl relative border border-white/10 text-center animate-bounce-in">
+      <button onclick="closeAuthModal()" class="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-white">
+        <i data-lucide="x" class="w-4.5 h-4.5"></i>
+      </button>
+
+      <div class="flex justify-center mb-2">
+        <div class="p-3 bg-purple-600/10 border border-purple-500/30 rounded-full text-purple-400 animate-bounce">
+          <i data-lucide="film" class="w-6 h-6"></i>
+        </div>
+      </div>
+
+      <h2 class="text-xl sm:text-2xl font-cinematic font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Sign In</h2>
+      <p class="text-[10px] sm:text-xs text-gray-400 mt-1">Unlock your personalized AI recommendation engine</p>
+
+      <form onsubmit="handleAuthLogin(event)" class="mt-6 space-y-4 text-left">
+        <div>
+          <label class="text-[10px] text-gray-400 uppercase font-extrabold block mb-1">Email Address</label>
+          <input id="auth-email-input" type="email" required placeholder="guest@cineflix.ai" class="w-full bg-space-900 border border-white/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-purple-500/50">
+        </div>
+        <div>
+          <label class="text-[10px] text-gray-400 uppercase font-extrabold block mb-1">Password</label>
+          <input id="auth-password-input" type="password" required placeholder="••••••••" class="w-full bg-space-900 border border-white/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-purple-500/50">
+        </div>
+        
+        <button type="submit" class="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 font-semibold rounded-full shadow-neon-purple text-xs sm:text-sm text-white uppercase tracking-widest font-black">Sign In</button>
+      </form>
+
+      <div class="mt-3 bg-cyan-900/10 border border-cyan-500/20 px-3 py-1.5 rounded-lg text-left leading-normal">
+        <span class="text-[10px] text-cyan-300 font-bold block">💡 Dev Tip: Login instantly with email <strong>guest@cineflix.ai</strong> using any password!</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP STATE CONTROLLERS -->
+  <script>
+    // Deep high-fidelity catalog fallback configured with TMDB relative paths
+    const mockMovies = [
+      {
+        id: "1726",
+        title: "Iron Man",
+        overview: "After being held captive in an Afghan cave, billionaire engineer Tony Stark creates a unique weaponized suit of armor to fight evil.",
+        poster_path: "/78lUTk4hkSSec4Js1ClvJBrnfs1.jpg",
+        backdrop_path: "/y25t58clcgdG26j5n36f6d0f10c.jpg",
+        release_date: "2008-04-30",
+        vote_average: 7.6,
+        genres: ["Action", "Science Fiction", "Adventure"],
+        trailer_url: "https://www.youtube.com/embed/8hYUtOM3dpc",
+        cast: ["Robert Downey Jr.", "Gwyneth Paltrow", "Jeff Bridges"],
+        director: "Jon Favreau",
+        keywords: ["marvel", "mcu", "superhero"],
+        streaming_platforms: ["Disney+", "Apple TV"]
+      },
+      {
+        id: "299534",
+        title: "Avengers: Endgame",
+        overview: "After the devastating events of Avengers: Infinity War, the universe is in ruins. With the help of remaining allies, the Avengers assemble once more.",
+        poster_path: "/or06Eee7Awi4g4mUhnj0ueK6qjC.jpg",
+        backdrop_path: "/7RyGO422dWDmU5pEdnbG8A8mR7c.jpg",
+        release_date: "2019-04-24",
+        vote_average: 8.3,
+        genres: ["Action", "Science Fiction", "Adventure"],
+        trailer_url: "https://www.youtube.com/embed/TcMBFSGVi1c",
+        cast: ["Robert Downey Jr.", "Chris Evans", "Mark Ruffalo"],
+        director: "Anthony Russo, Joe Russo",
+        keywords: ["marvel", "mcu", "superhero", "avengers", "timeline"],
+        streaming_platforms: ["Disney+"]
+      },
+      {
+        id: "284053",
+        title: "Thor: Ragnarok",
+        overview: "Thor is imprisoned on the other side of the universe and finds himself in a deadly gladiatorial contest against his former ally, the Hulk.",
+        poster_path: "/rzRwgo2t261YyXm4hx8tqOIpa6y.jpg",
+        backdrop_path: "/kaIfm5vydwWYKf9Z6qagqAqjVeY.jpg",
+        release_date: "2017-10-25",
+        vote_average: 7.6,
+        genres: ["Action", "Science Fiction", "Comedy", "Adventure"],
+        trailer_url: "https://www.youtube.com/embed/ue80QwXMRHg",
+        cast: ["Chris Hemsworth", "Tom Hiddleston", "Mark Ruffalo"],
+        director: "Taika Waititi",
+        keywords: ["marvel", "mcu", "superhero", "thor"],
+        streaming_platforms: ["Disney+", "Apple TV"]
+      },
+      {
+        id: "19995",
+        title: "Avatar",
+        overview: "In the 22nd century, a paraplegic Marine is dispatched to the moon Pandora on a unique mission, but becomes torn between following orders.",
+        poster_path: "/kyeE2m2X0nPtrir714wRk556uGC.jpg",
+        backdrop_path: "/v5ZmgzV48TEvl9kg376IC70T27q.jpg",
+        release_date: "2009-12-10",
+        vote_average: 7.6,
+        genres: ["Action", "Science Fiction", "Adventure"],
+        trailer_url: "https://www.youtube.com/embed/5PSNL1q3fc8",
+        cast: ["Sam Worthington", "Zoe Saldana", "Sigourney Weaver"],
+        director: "James Cameron",
+        keywords: ["avatar", "pandora"],
+        streaming_platforms: ["Disney+", "Apple TV"]
+      },
+      {
+        id: "76600",
+        title: "Avatar: The Way of Water",
+        overview: "Set more than a decade after the events of the first film, learn the story of the Sully family, the trouble that follows them, the lengths they go to keep each other safe.",
+        poster_path: "/t6TL71Q2iBDTURczAs6GYccl7m4.jpg",
+        backdrop_path: "/8pjWz2RGSVkuv65TT36VlG83LLC.jpg",
+        release_date: "2022-12-14",
+        vote_average: 7.7,
+        genres: ["Science Fiction", "Action", "Adventure"],
+        trailer_url: "https://www.youtube.com/embed/d9MyW72ELq0",
+        cast: ["Sam Worthington", "Zoe Saldana", "Sigourney Weaver"],
+        director: "James Cameron",
+        keywords: ["avatar", "pandora", "sequel"],
+        streaming_platforms: ["Disney+", "Max"]
+      },
+      {
+        id: "155",
+        title: "The Dark Knight",
+        overview: "Batman raises the stakes in his war on crime. With the help of Lt. Jim Gordon and District Attorney Harvey Dent, Batman sets out to dismantle the remaining criminal organizations.",
+        poster_path: "/qJ2tWGB2Xoi1Gridm555CsgwclA.jpg",
+        backdrop_path: "/nMKdUU7JlhSuwRl0r4v206gNDmF.jpg",
+        release_date: "2008-07-16",
+        vote_average: 8.5,
+        genres: ["Action", "Crime", "Drama"],
+        trailer_url: "https://www.youtube.com/embed/EXeTwQWrcwY",
+        cast: ["Christian Bale", "Heath Ledger", "Aaron Eckhart"],
+        director: "Christopher Nolan",
+        keywords: ["dc", "superhero", "joker", "batman"],
+        streaming_platforms: ["Max", "Apple TV"]
+      },
+      {
+        id: "475557",
+        title: "Joker",
+        overview: "During the 1980s, a failed stand-up comedian is driven insane and turns to a life of crime and chaos in Gotham City while becoming an infamous psychopathic figure.",
+        poster_path: "/udDcl707h7w8nu68uRsg0m5zTu5.jpg",
+        backdrop_path: "/n6bqi2L871t0w56i5o5hC669332.jpg",
+        release_date: "2019-10-02",
+        vote_average: 8.2,
+        genres: ["Crime", "Thriller", "Drama"],
+        trailer_url: "https://www.youtube.com/embed/zAGVQLH_RQc",
+        cast: ["Joaquin Phoenix", "Robert De Niro", "Zazie Beetz"],
+        director: "Todd Phillips",
+        keywords: ["dc", "joker", "gotham"],
+        streaming_platforms: ["Max", "Apple TV"]
+      },
+      {
+        id: "51180",
+        title: "Fast Five",
+        overview: "Dominic Toretto and his crew of street racers plan a massive heist to buy their freedom while being hunted by a powerful Brazilian drug lord and a federal agent.",
+        poster_path: "/xCAEvJ0555c4gJ9Q2YVp6v1gLlc.jpg",
+        backdrop_path: "/6tRu6e6H12W8926kui7ryrFft5b.jpg",
+        release_date: "2011-04-20",
+        vote_average: 7.2,
+        genres: ["Action", "Thriller", "Crime"],
+        trailer_url: "https://www.youtube.com/embed/O8HGNMR9sz4",
+        cast: ["Vin Diesel", "Paul Walker", "Dwayne Johnson"],
+        director: "Justin Lin",
+        keywords: ["fast & furious", "cars", "heist"],
+        streaming_platforms: ["Prime Video", "Apple TV"]
+      },
+      {
+        id: "168259",
+        title: "Furious 7",
+        overview: "Deckard Shaw seeks revenge against Dominic Toretto and his family for his comatose brother, putting the crew in extreme danger once again.",
+        poster_path: "/kYd1z11aC2cCl1Js8T4T2T4d1zc.jpg",
+        backdrop_path: "/yp496243y4QzRuXw51585Fl.jpg",
+        release_date: "2015-04-01",
+        vote_average: 7.3,
+        genres: ["Action", "Thriller"],
+        trailer_url: "https://www.youtube.com/embed/Skpu5HaVkOc",
+        cast: ["Vin Diesel", "Paul Walker", "Jason Statham"],
+        director: "James Wan",
+        keywords: ["fast & furious", "cars"],
+        streaming_platforms: ["Max", "Apple TV"]
+      },
+      {
+        id: "157336",
+        title: "Interstellar",
+        overview: "The adventures of a group of explorers who make use of a newly discovered wormhole to surpass the limitations on human space travel.",
+        poster_path: "/gEU2Qv4zcyFg77NEe6hqzbgj4a1.jpg",
+        backdrop_path: "/xJHok705MUIpxHgU247ccC59G4v.jpg",
+        release_date: "2014-11-05",
+        vote_average: 8.4,
+        genres: ["Adventure", "Drama", "Science Fiction"],
+        trailer_url: "https://www.youtube.com/embed/zSWdZATo3Dc",
+        cast: ["Matthew McConaughey", "Anne Hathaway", "Jessica Chastain"],
+        director: "Christopher Nolan",
+        keywords: ["space", "wormhole", "time travel", "nolan"],
+        streaming_platforms: ["Paramount+", "Amazon Prime"]
+      },
+      {
+        id: "27205",
+        title: "Inception",
+        overview: "Cobb, a skilled thief who steals valuable secrets from deep within the subconscious during the dream state, is offered a chance to regain his old life.",
+        poster_path: "/l98eCn546T7t1oCNqc4gwO2UPw5.jpg",
+        backdrop_path: "/s3TJZ8oC65Ux4pa1wU4uhdvjA2K.jpg",
+        release_date: "2010-07-14",
+        vote_average: 8.3,
+        genres: ["Action", "Science Fiction", "Adventure"],
+        trailer_url: "https://www.youtube.com/embed/YoHD9XEInc0",
+        cast: ["Leonardo DiCaprio", "Joseph Gordon-Levitt", "Tom Hardy"],
+        director: "Christopher Nolan",
+        keywords: ["dreams", "subconscious", "nolan"],
+        streaming_platforms: ["Max", "Apple TV"]
+      },
+      {
+        id: "872585",
+        title: "Oppenheimer",
+        overview: "The story of J. Robert Oppenheimer's role in the development of the atomic bomb during World War II.",
+        poster_path: "/8Gxv2j2ar2jRS177h481g0RHYlh.jpg",
+        backdrop_path: "/fm61mcr0vUjOI1ML2agwO2UPw5.jpg",
+        release_date: "2023-07-19",
+        vote_average: 8.1,
+        genres: ["Drama", "History"],
+        trailer_url: "https://www.youtube.com/embed/uYPbbksJxIg",
+        cast: ["Cillian Murphy", "Emily Blunt", "Matt Damon", "Robert Downey Jr."],
+        director: "Christopher Nolan",
+        keywords: ["atomic bomb", "nolan", "biography"],
+        streaming_platforms: ["Peacock", "Apple TV"]
+      },
+      {
+        id: "693134",
+        title: "Dune: Part Two",
+        overview: "Follow the mythic journey of Paul Atreides as he unites with Chani and the Fremen while on a path of revenge against the conspirators.",
+        poster_path: "/czembDcB2338y4QzRuXw51585Fl.jpg",
+        backdrop_path: "/xOMo8BRK7PzsJ2wQ7ExJSRq2e8G.jpg",
+        release_date: "2024-02-27",
+        vote_average: 8.3,
+        genres: ["Science Fiction", "Adventure"],
+        trailer_url: "https://www.youtube.com/embed/Way9Dexny3w",
+        cast: ["Timothée Chalamet", "Rebecca Ferguson", "Zendaya", "Austin Butler"],
+        director: "Denis Villeneuve",
+        keywords: ["desert", "spice", "sandworm", "dune", "sequel"],
+        streaming_platforms: ["Max", "Apple TV"]
+      },
+      {
+        id: "324857",
+        title: "Into the Spider-Verse",
+        overview: "Teen Miles Morales becomes the Spider-Man of his universe, and must join with five spider-powered individuals from other dimensions to stop a threat.",
+        poster_path: "/iiZZNpe4oA0RtZ4nRLnCMj49Urk.jpg",
+        backdrop_path: "/7RyGO422dWDmU5pEdnbG8A8mR7c.jpg",
+        release_date: "2018-12-06",
+        vote_average: 8.4,
+        genres: ["Animation", "Action", "Adventure", "Science Fiction"],
+        trailer_url: "https://www.youtube.com/embed/g4HbzQFod80",
+        cast: ["Shameik Moore", "Jake Johnson", "Hailee Steinfeld"],
+        director: "Bob Persichetti",
+        keywords: ["marvel", "superhero", "spider-man", "multiverse"],
+        streaming_platforms: ["Disney+", "Apple TV"]
+      },
+      {
+        id: "372058",
+        title: "Your Name.",
+        overview: "High schoolers Mitsuha and Taki switch places, waking up in each others bodies and embarking on a cosmic search for each other.",
+        poster_path: "/q719j5a1n3GgNCv8w70gnj36qiC.jpg",
+        backdrop_path: "/m8VVM9g1Pnb26a5g8V7s56dE143.jpg",
+        release_date: "2016-08-26",
+        vote_average: 8.5,
+        genres: ["Animation", "Romance", "Drama", "Fantasy"],
+        trailer_url: "https://www.youtube.com/embed/hRfHcp2GjVI",
+        cast: ["Ryunosuke Kamiki", "Mone Kamishiraishi"],
+        director: "Makoto Shinkai",
+        keywords: ["anime", "body swap", "japan"],
+        streaming_platforms: ["Crunchyroll", "Apple TV"]
+      },
+      {
+        id: "129",
+        title: "Spirited Away",
+        overview: "A young girl, Chihiro, becomes trapped in a strange new world of spirits. When her parents undergo a mysterious transformation, she must call upon courage.",
+        poster_path: "/39wmItIWsg5sclgUjA75tJV4jDV.jpg",
+        backdrop_path: "/Ab8Zb2UB4jP1hU6070ih06m4Z1Y.jpg",
+        release_date: "2001-07-20",
+        vote_average: 8.5,
+        genres: ["Animation", "Family", "Fantasy"],
+        trailer_url: "https://www.youtube.com/embed/ByXuk9QqQkk",
+        cast: ["Rumi Hiiragi", "Miyu Irino"],
+        director: "Hayao Miyazaki",
+        keywords: ["anime", "studio ghibli", "japan"],
+        streaming_platforms: ["Max"]
+      },
+      {
+        id: "609681",
+        title: "Demon Slayer: Mugen Train",
+        overview: "Tanjirō Kamado and his companions accompany Kyōjurō Rengoku, the Flame Hashira, to investigate a mysterious series of disappearances inside a train.",
+        poster_path: "/h8g097gZ6n2AI3Dzmwg6JZHj0a0.jpg",
+        backdrop_path: "/q5168sqjN545mZ736VlG83LLC.jpg",
+        release_date: "2020-10-16",
+        vote_average: 8.3,
+        genres: ["Animation", "Action", "Fantasy", "Adventure"],
+        trailer_url: "https://www.youtube.com/embed/ATJYac_dORw",
+        cast: ["Natsuki Hanae", "Akari Kito", "Satoshi Hino"],
+        director: "Haruo Sotozaki",
+        keywords: ["anime", "demon slayer", "shonen"],
+        streaming_platforms: ["Crunchyroll", "Hulu"]
+      },
+      {
+        id: "671",
+        title: "Harry Potter and the Philosopher's Stone",
+        overview: "Harry Potter, an eleven-year-old orphan, discovers that he is a wizard and is invited to attend the Hogwarts School of Witchcraft and Wizardry.",
+        poster_path: "/wuMc08IPKXI7Zgwj5gYWj44Lw2C.jpg",
+        backdrop_path: "/393t816v2aQfgp6v1gLlc2T51g0.jpg",
+        release_date: "2001-11-16",
+        vote_average: 7.9,
+        genres: ["Fantasy", "Adventure", "Family"],
+        trailer_url: "https://www.youtube.com/embed/VyHV0BRtdy4",
+        cast: ["Daniel Radcliffe", "Rupert Grint", "Emma Watson"],
+        director: "Chris Columbus",
+        keywords: ["harry potter", "hogwarts", "magic"],
+        streaming_platforms: ["Max", "Peacock"]
+      },
+      {
+        id: "12445",
+        title: "Harry Potter & the Deathly Hallows Part 2",
+        overview: "Harry, Ron, and Hermione continue their quest to find the remaining Horcruxes in order to destroy the Dark Lord, leading to the ultimate battle.",
+        poster_path: "/c54X1flpdg26gV6ggjQI767s1u7.jpg",
+        backdrop_path: "/n5A7brJC2x37tUH23XJp248wJ1Y.jpg",
+        release_date: "2011-07-07",
+        vote_average: 8.1,
+        genres: ["Fantasy", "Adventure", "Family"],
+        trailer_url: "https://www.youtube.com/embed/mObK5XD8udk",
+        cast: ["Daniel Radcliffe", "Rupert Grint", "Emma Watson"],
+        director: "David Yates",
+        keywords: ["harry potter", "hogwarts", "magic"],
+        streaming_platforms: ["Max", "Peacock"]
+      },
+      {
+        id: "360814",
+        title: "Dangal",
+        overview: "A former wrestler decides to fulfill his dream of winning a gold medal for his country by training his daughters for the Commonwealth Games.",
+        poster_path: "/w9q7wzoJ4j76k5C52RSJt2v1gLt.jpg",
+        backdrop_path: "/lpe61mcr0vUjOI1ML2agwO2UPw5.jpg",
+        release_date: "2016-12-21",
+        vote_average: 8.0,
+        genres: ["Drama", "Family"],
+        original_language: "hi",
+        trailer_url: "https://www.youtube.com/embed/x_7YlGv9u1g",
+        cast: ["Aamir Khan", "Sakshi Tanwar", "Fatima Sana Shaikh", "Sanya Malhotra"],
+        director: "Nitesh Tiwari",
+        keywords: ["bollywood", "wrestling", "sports", "family", "hindi"],
+        streaming_platforms: ["Netflix", "Apple TV"]
+      },
+      {
+        id: "579974",
+        title: "RRR",
+        overview: "A fictional history of two legendary revolutionaries and their journey away from home before they began fighting for their country in the 1920s.",
+        poster_path: "/nEu8H1w73238T7e6HQzLzc5Cgwl.jpg",
+        backdrop_path: "/lpe8pjWz2RGSVkuv65TT36VlG83LLC.jpg",
+        release_date: "2022-03-24",
+        vote_average: 7.8,
+        genres: ["Action", "Drama", "Adventure"],
+        original_language: "te",
+        trailer_url: "https://www.youtube.com/embed/NgBoMJy386M",
+        cast: ["N.T. Rama Rao Jr.", "Ram Charan", "Ajay Devgn", "Alia Bhatt"],
+        director: "S.S. Rajamouli",
+        keywords: ["south indian", "telugu", "tamil", "rrr", "revolution", "historical fiction"],
+        streaming_platforms: ["Netflix", "Zee5"]
+      },
+      {
+        id: "496243",
+        title: "Parasite",
+        overview: "All unemployed, Ki-taek's family takes peculiar interest in the wealthy and glamorous Parks for their livelihood until they get entangled in an unexpected incident.",
+        poster_path: "/7IiTTvv3PcNjB5e714wRk556uGC.jpg",
+        backdrop_path: "/tu496243y4QzRuXw51585Fl.jpg",
+        release_date: "2019-05-30",
+        vote_average: 8.5,
+        genres: ["Thriller", "Drama", "Comedy"],
+        original_language: "ko",
+        trailer_url: "https://www.youtube.com/embed/5xH0HfJHsaY",
+        cast: ["Song Kang-ho", "Lee Sun-kyun", "Cho Yeo-jeong", "Choi Woo-shik"],
+        director: "Bong Joon Ho",
+        keywords: ["korean", "k-drama", "parasite", "class struggle", "thriller", "black comedy"],
+        streaming_platforms: ["Max", "Apple TV"]
+      },
+      {
+        id: "396535",
+        title: "Train to Busan",
+        overview: "While a zombie virus breaks out in South Korea, passengers struggle to survive on the train from Seoul to Busan.",
+        poster_path: "/uAg8097gZ6n2AI3Dzmwg6JZHj0a0.jpg",
+        backdrop_path: "/tu396535y4QzRuXw51585Fl.jpg",
+        release_date: "2016-07-20",
+        vote_average: 7.8,
+        genres: ["Horror", "Action", "Thriller"],
+        original_language: "ko",
+        trailer_url: "https://www.youtube.com/embed/pyWuHv2-Y8s",
+        cast: ["Gong Yoo", "Jung Yu-mi", "Ma Dong-seok", "Kim Su-an"],
+        director: "Yeon Sang-ho",
+        keywords: ["korean", "k-drama", "zombie", "horror", "train", "apocalypse"],
+        streaming_platforms: ["Peacock", "Apple TV", "Tubi"]
+      }
+    ];
+
+    // Global session state
+    let state = {
+      lang: 'en',
+      theme: 'dark',
+      isAuthenticated: false,
+      user: null,
+      heroIndex: 0,
+      activeTab: 'home',
+      activeMovieId: null,
+      activeProfileTab: 'watchlist',
+      watchlist: [],
+      favorites: []
+    };
+
+    // Live catalog database array
+    let movieCatalog = [...mockMovies];
+
+    // Initialize systems
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      initCanvasParticles();
+      initCursorEffect();
+      loadSession();
+      initTerminalLogs();
+      
+      // Auto-trigger live TMDB synchronization core!
+      initializeLiveCatalog();
+    });
+
+    const loadSession = () => {
+      const savedUser = localStorage.getItem('cf_user');
+      const savedToken = localStorage.getItem('cf_token');
+      if (savedUser && savedToken) {
+        state.isAuthenticated = true;
+        state.user = JSON.parse(savedUser);
+        
+        const rawWl = state.user.watchlist || [];
+        state.watchlist = rawWl.map(item => typeof item === 'object' ? String(item.movieId) : String(item));
+        
+        const rawFav = state.user.favorites || [];
+        state.favorites = rawFav.map(item => typeof item === 'object' ? String(item.movieId) : String(item));
+        
+        updateNavAuthBlock();
+      }
+    };
+
+    // TMDB API Core Fetcher
+    const getTMDBKey = () => localStorage.getItem('cf_tmdb_api_key') || '4e404a8d661f68bc35596693328f1d60';
+    const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+
+    async function fetchTMDB(endpoint, queryParams = {}) {
+      const apiKey = getTMDBKey();
+      const url = new URL(`${TMDB_BASE_URL}${endpoint}`);
+      url.searchParams.append('api_key', apiKey);
+      Object.keys(queryParams).forEach(key => url.searchParams.append(key, queryParams[key]));
+      
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`TMDB Status ${res.status}`);
+        return await res.json();
+      } catch (err) {
+        console.warn(`TMDB endpoint failed: ${endpoint}`, err);
+        return null;
+      }
+    }
+
+    // Dynamic Skeletons loading animations
+    function showSkeletons() {
+      document.querySelectorAll('.tab-view div[id^="row-"]').forEach(row => {
+        row.innerHTML = Array(6).fill().map(() => `
+          <div class="shrink-0 w-[180px] sm:w-[220px] aspect-[2/3] rounded-xl bg-space-900 border border-white/5 animate-pulse flex flex-col justify-end p-4 relative">
+            <div class="absolute inset-0 bg-white/5 rounded-lg"></div>
+            <div class="space-y-2 relative z-10">
+              <div class="h-3.5 bg-white/10 rounded w-3/4"></div>
+              <div class="h-2.5 bg-white/5 rounded w-1/2"></div>
+            </div>
+          </div>
+        `).join('');
+      });
+    }
+
+    // Catalog merger & transform core
+    const addOrUpdateCatalog = (m) => {
+      const idx = movieCatalog.findIndex(item => item.id == m.id);
+      const genresMap = {
+        28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+        99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
+        27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance', 878: 'Science Fiction',
+        10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western'
+      };
+      const movieGenres = m.genre_ids ? m.genre_ids.map(id => genresMap[id] || 'Movie').slice(0, 3) : ['Drama'];
+      
+      const movieObj = {
+        id: String(m.id),
+        title: m.title || m.name,
+        overview: m.overview,
+        poster_path: m.poster_path,
+        backdrop_path: m.backdrop_path,
+        release_date: m.release_date || m.first_air_date || '2024-01-01',
+        vote_average: m.vote_average || 7.0,
+        genres: movieGenres,
+        original_language: m.original_language || 'en',
+        trailer_url: '', 
+        cast: [], 
+        director: '', 
+        keywords: [],
+        streaming_platforms: ['Netflix', 'Disney+', 'Prime Video', 'Apple TV', 'Max']
+      };
+
+      if (idx > -1) {
+        movieObj.trailer_url = movieCatalog[idx].trailer_url || '';
+        movieCatalog[idx] = { ...movieCatalog[idx], ...movieObj };
+      } else {
+        movieCatalog.push(movieObj);
+      }
+    };
+
+    // Live catalog population routine
+    async function initializeLiveCatalog() {
+      // Step 1: Render everything immediately with high-fidelity local catalog using official posters!
+      // This loads instantly (in < 10ms) without showing skeletons or freezing on network calls!
+      renderRowLive('row-trending', mockMovies.slice(0, 8));
+      setupHeroSliderLive(mockMovies.slice(0, 5));
+      renderRowLive('row-popular', mockMovies.slice(4, 12));
+      renderRowLive('row-personalized', mockMovies.slice(2, 8), true);
+      renderRowLive('row-marvel', mockMovies.filter(m => m.keywords.includes('marvel')));
+      renderRowLive('row-dc', mockMovies.filter(m => m.keywords.includes('dc')));
+      renderRowLive('row-harrypotter', mockMovies.filter(m => m.keywords.includes('harry potter')));
+      renderRowLive('row-fastfurious', mockMovies.filter(m => m.keywords.includes('fast & furious')));
+      renderRowLive('row-avatar', mockMovies.filter(m => m.keywords.includes('avatar')));
+      renderRowLive('row-anime', mockMovies.filter(m => m.keywords.includes('anime')));
+      renderRowLive('row-hollywood', mockMovies.filter(m => m.original_language === 'en' || !m.original_language));
+      renderRowLive('row-bollywood', mockMovies.filter(m => m.original_language === 'hi'));
+      renderRowLive('row-southindian', mockMovies.filter(m => m.original_language === 'te' || m.original_language === 'ta'));
+      renderRowLive('row-korean', mockMovies.filter(m => m.original_language === 'ko'));
+      
+      const scifiList = movieCatalog.filter(m => m.genres && m.genres.includes('Science Fiction'));
+      renderRowLive('row-scifi', scifiList);
+      renderRecentlyWatchedRow();
+      lucide.createIcons();
+
+      // Step 2: In the background, asynchronously synchronize with TMDB API.
+      // We fetch individual rows asynchronously and upgrade them dynamically as they arrive,
+      // avoiding blocking the page thread or UI drawing!
+      
+      // Async helper to load and update a single row
+      const syncRow = async (rowId, endpoint, queryParams = {}, isMatchBadge = false, customCallback = null) => {
+        const data = await fetchTMDB(endpoint, queryParams);
+        if (data && data.results && data.results.length > 0) {
+          data.results.forEach(m => addOrUpdateCatalog(m));
+          
+          // Map raw TMDB results to fully-formatted catalog objects with 'genres' mapped!
+          const catalogItems = data.results.map(m => movieCatalog.find(item => item.id == m.id)).filter(Boolean);
+          
+          renderRowLive(rowId, catalogItems, isMatchBadge);
+          if (customCallback) customCallback(catalogItems);
+          lucide.createIcons();
+        }
+      };
+
+      // Asynchronously request updates for each carousel shelf with staggered timeouts
+      setTimeout(() => syncRow('row-trending', '/trending/movie/week', {}, false, (results) => {
+        setupHeroSliderLive(results.slice(0, 5));
+      }), 50);
+
+      setTimeout(() => syncRow('row-popular', '/movie/popular'), 150);
+      setTimeout(() => syncRow('row-personalized', '/movie/top_rated', {}, true), 250);
+      setTimeout(() => syncRow('row-marvel', '/discover/movie', { with_companies: '420', sort_by: 'popularity.desc' }), 350);
+      setTimeout(() => syncRow('row-dc', '/discover/movie', { with_companies: '9993', sort_by: 'popularity.desc' }), 450);
+      setTimeout(() => syncRow('row-harrypotter', '/search/movie', { query: 'Harry Potter' }), 550);
+      setTimeout(() => syncRow('row-fastfurious', '/search/movie', { query: 'Fast & Furious' }), 650);
+      setTimeout(() => syncRow('row-avatar', '/search/movie', { query: 'Avatar' }), 750);
+      setTimeout(() => syncRow('row-anime', '/discover/movie', { with_genres: '16', with_original_language: 'ja', sort_by: 'vote_count.desc' }), 850);
+      setTimeout(() => syncRow('row-hollywood', '/discover/movie', { with_original_language: 'en', sort_by: 'popularity.desc' }), 950);
+      setTimeout(() => syncRow('row-bollywood', '/discover/movie', { with_original_language: 'hi', sort_by: 'popularity.desc' }), 1050);
+      setTimeout(() => syncRow('row-southindian', '/discover/movie', { with_original_language: 'te', sort_by: 'popularity.desc' }), 1150);
+      setTimeout(() => syncRow('row-korean', '/discover/movie', { with_original_language: 'ko', sort_by: 'popularity.desc' }), 1250);
+    }
+
+    const renderRowLive = (rowId, list, isMatchBadge = false) => {
+      let html = '';
+      list.forEach(m => {
+        const matchPercent = isMatchBadge ? Math.floor(Math.random() * 8) + 92 : 0;
+        html += `
+          <div onclick="openMovieDetails('${m.id}')" class="relative shrink-0 w-[180px] sm:w-[220px] aspect-[2/3] cursor-pointer group rounded-xl overflow-hidden glass-card shadow-glass flex flex-col p-1.5 transition-all duration-300 hover:scale-[1.03] hover:border-purple-500/60 hover:shadow-neon-purple/50" onmouseenter="initCardHover(this, '${m.id}')" onmouseleave="cancelCardHover(this)">
+            <img src="${resolveImagePath(m.poster_path)}" alt="${m.title}" class="w-full h-full object-cover rounded-lg transition-transform duration-500 group-hover:scale-105" onerror="handleImageError(this)">
+            <div class="absolute inset-0 bg-gradient-to-t from-space-950 via-transparent to-black/30 opacity-60 rounded-lg"></div>
+            
+            ${isMatchBadge 
+              ? `<div class="absolute top-2.5 left-2.5 bg-purple-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-purple-400/30 shadow-neon-purple/35 z-20">
+                  <span>${matchPercent}%</span>
+                  <span class="text-[8px] uppercase">Match</span>
+                 </div>`
+              : ''
+            }
+            
+            <div class="absolute bottom-3 left-3 right-3 z-10 text-left">
+              <h4 class="text-white text-xs sm:text-sm font-bold truncate">${m.title}</h4>
+              <div class="flex items-center gap-1 mt-0.5 text-[10px] text-gray-300">
+                <span class="text-amber-400 flex items-center gap-0.5 font-bold">★ ${Number(m.vote_average).toFixed(1)}</span>
+                <span>•</span>
+                <span>${(m.genres && m.genres.length > 0) ? m.genres[0] : 'Drama'}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById(rowId).innerHTML = html;
+    };
+
+    // Hero banner setup
+    let heroRotationInterval = null;
+    const setupHeroSliderLive = (heroMovies) => {
+      clearInterval(heroRotationInterval);
+      
+      const setHero = (idx) => {
+        state.heroIndex = idx;
+        const movie = heroMovies[idx % heroMovies.length];
+        
+        const titleEl = document.getElementById('hero-title');
+        const descEl = document.getElementById('hero-desc');
+        const backdropEl = document.getElementById('hero-backdrop');
+        
+        // Triggers micro-fade transitions
+        titleEl.style.opacity = 0;
+        titleEl.style.transform = 'translateY(15px)';
+        descEl.style.opacity = 0;
+        descEl.style.transform = 'translateY(15px)';
+        backdropEl.style.opacity = 0.1;
+        backdropEl.style.transform = 'scale(1.02)';
+        
+        setTimeout(() => {
+          titleEl.innerText = movie.title;
+          descEl.innerText = movie.overview;
+          backdropEl.src = resolveImagePath(movie.backdrop_path || movie.poster_path, 'original');
+          document.getElementById('hero-details-btn').onclick = () => openMovieDetails(movie.id);
+          
+          titleEl.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+          titleEl.style.opacity = 1;
+          titleEl.style.transform = 'translateY(0)';
+          
+          descEl.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s';
+          descEl.style.opacity = 1;
+          descEl.style.transform = 'translateY(0)';
+          
+          backdropEl.style.transition = 'opacity 1.2s ease-in-out, transform 12s linear';
+          backdropEl.style.opacity = 0.35;
+          backdropEl.style.transform = 'scale(1.06)';
+        }, 150);
+
+        let dotsHTML = '';
+        for (let i = 0; i < heroMovies.length; i++) {
+          dotsHTML += `<button onclick="setHeroIndex(${i})" class="w-2.5 h-2.5 rounded-full transition-all duration-300 ${i === idx ? 'bg-purple-500 scale-125 shadow-neon-purple w-6' : 'bg-white/20'}"></button>`;
+        }
+        document.getElementById('hero-slider-dots').innerHTML = dotsHTML;
+
+        // Poster adaptation ambient blends
+        const gradients = [
+          'from-purple-900/60 to-space-950',
+          'from-cyan-950/80 to-space-950',
+          'from-indigo-950/70 to-space-950',
+          'from-red-950/70 to-space-950',
+          'from-blue-950/70 to-space-950'
+        ];
+        document.getElementById('ambient-glow').className = `fixed top-0 inset-x-0 h-[65vh] sm:h-[85vh] bg-gradient-to-b ${gradients[idx % gradients.length]} -z-10 opacity-70 ambient-bg`;
+      };
+
+      setHero(0);
+      heroRotationInterval = setInterval(() => {
+        if (state.activeTab === 'home') {
+          setHero((state.heroIndex + 1) % heroMovies.length);
+        }
+      }, 8000);
+
+      window.setHeroIndex = setHero;
+    };
+
+    // Row navigation scroll utility
+    function scrollRow(rowId, direction) {
+      const container = document.getElementById(rowId);
+      if (!container) return;
+      const width = container.clientWidth * 0.75;
+      container.scrollBy({ left: direction * width, behavior: 'smooth' });
+    }
+
+    // Settings Modal
+    function openSettingsModal() {
+      document.getElementById('settings-tmdb-input').value = localStorage.getItem('cf_tmdb_api_key') || '';
+      document.getElementById('settings-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+    function handleSaveSettings(e) {
+      e.preventDefault();
+      const val = document.getElementById('settings-tmdb-input').value.trim();
+      if (val) {
+        localStorage.setItem('cf_tmdb_api_key', val);
+      } else {
+        localStorage.removeItem('cf_tmdb_api_key');
+      }
+      closeSettingsModal();
+      initializeLiveCatalog();
+      
+      confetti({
+        particleCount: 60,
+        spread: 60,
+        colors: ['#06b6d4', '#a855f7']
+      });
+    }
+    function useGuestApiKey() {
+      document.getElementById('settings-tmdb-input').value = '4e404a8d661f68bc35596693328f1d60';
+    }
+
+    // Immersive hover preview
+    let hoverTimeout = null;
+    let videoTimeout = null;
+    let activeHoverMovieId = null;
+    let isHoveringPreview = false;
+
+    function initCardHover(cardElement, movieId) {
+      clearTimeout(hoverTimeout);
+      activeHoverMovieId = movieId;
+      
+      hoverTimeout = setTimeout(() => {
+        showHoverPreview(cardElement, movieId);
+      }, 600);
+    }
+
+    function cancelCardHover(cardElement) {
+      clearTimeout(hoverTimeout);
+      setTimeout(() => {
+        if (!isHoveringPreview) {
+          hideHoverPreview();
+        }
+      }, 100);
+    }
+
+    function showHoverPreview(cardElement, movieId) {
+      const movie = movieCatalog.find(m => m.id == movieId);
+      if (!movie) return;
+
+      const preview = document.getElementById('hover-preview-card');
+      const rect = cardElement.getBoundingClientRect();
+      const scrollY = window.scrollY;
+      const scrollX = window.scrollX;
+      
+      preview.style.display = 'block';
+      preview.style.width = `${rect.width * 1.3}px`;
+      
+      const targetWidth = rect.width * 1.3;
+      const targetHeight = rect.height * 1.3;
+      
+      let left = rect.left + scrollX - (targetWidth - rect.width) / 2;
+      let top = rect.top + scrollY - (targetHeight - rect.height) / 2;
+      
+      if (left < 10) left = 10;
+      if (left + targetWidth > window.innerWidth - 10) left = window.innerWidth - targetWidth - 10;
+      
+      preview.style.left = `${left}px`;
+      preview.style.top = `${top}px`;
+      
+      document.getElementById('hover-preview-title').innerText = movie.title;
+      document.getElementById('hover-preview-year').innerText = movie.release_date ? movie.release_date.split('-')[0] : '2024';
+      document.getElementById('hover-preview-rating').innerText = `★ ${Number(movie.vote_average).toFixed(1)}`;
+      document.getElementById('hover-preview-backdrop').src = resolveImagePath(movie.backdrop_path || movie.poster_path, 'w500');
+      
+      const genreHTML = (movie.genres || []).map(g => `<span class="bg-purple-600/25 border border-purple-500/30 text-purple-300 text-[8px] font-bold px-1.5 py-0.5 rounded-full">${g}</span>`).join('');
+      document.getElementById('hover-preview-genres').innerHTML = genreHTML;
+
+      const isWl = state.watchlist.some(id => id == movie.id);
+      const isFv = state.favorites.some(id => id == movie.id);
+      document.getElementById('hover-preview-wl-icon').setAttribute('data-lucide', isWl ? 'check' : 'plus');
+      document.getElementById('hover-preview-fav-icon').className = isFv ? 'w-4 h-4 fill-pink-500 text-pink-500' : 'w-4 h-4 text-white';
+      lucide.createIcons();
+
+      preview.classList.remove('hidden', 'scale-95', 'opacity-0');
+      preview.classList.add('scale-100', 'opacity-100', 'shadow-neon-purple', 'duration-300');
+      
+      preview.onmouseenter = () => { isHoveringPreview = true; };
+      preview.onmouseleave = () => { isHoveringPreview = false; hideHoverPreview(); };
+
+      clearTimeout(videoTimeout);
+      document.getElementById('hover-preview-video-container').innerHTML = '';
+      document.getElementById('hover-preview-backdrop').classList.remove('opacity-0');
+
+      videoTimeout = setTimeout(async () => {
+        let trailerKey = '';
+        if (movie.trailer_url) {
+          const match = movie.trailer_url.match(/(?:embed\/|v=)([^?&]+)/);
+          if (match) trailerKey = match[1];
+        } else {
+          const videos = await fetchTMDB(`/movie/${movie.id}/videos`);
+          if (videos && videos.results) {
+            const trailer = videos.results.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+            if (trailer) {
+              trailerKey = trailer.key;
+              movie.trailer_url = `https://www.youtube.com/embed/${trailer.key}`;
+            }
+          }
+        }
+        
+        if (trailerKey) {
+          document.getElementById('hover-preview-video-container').innerHTML = `
+            <iframe class="w-full h-full" src="https://www.youtube.com/embed/${trailerKey}?autoplay=1&mute=1&controls=0&loop=1&playlist=${trailerKey}&showinfo=0&rel=0&modestbranding=1" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"></iframe>
+          `;
+          setTimeout(() => {
+            document.getElementById('hover-preview-backdrop').classList.add('opacity-0', 'transition-opacity', 'duration-500');
+          }, 800);
+        }
+      }, 600);
+    }
+
+    function hideHoverPreview() {
+      const preview = document.getElementById('hover-preview-card');
+      preview.classList.remove('scale-100', 'opacity-100', 'shadow-neon-purple');
+      preview.classList.add('scale-95', 'opacity-0');
+      
+      setTimeout(() => {
+        if (preview.classList.contains('opacity-0')) {
+          preview.style.display = 'none';
+          document.getElementById('hover-preview-video-container').innerHTML = '';
+          document.getElementById('hover-preview-backdrop').classList.remove('opacity-0');
+        }
+      }, 200);
+    }
+
+    function triggerPreviewPlay() {
+      const m = movieCatalog.find(mv => mv.id == activeHoverMovieId);
+      openTrailerModal(m ? m.trailer_url : '');
+    }
+    function triggerPreviewFavorite() {
+      const id = activeHoverMovieId;
+      const idx = state.favorites.indexOf(id);
+      if (idx > -1) state.favorites.splice(idx, 1);
+      else state.favorites.push(id);
+      saveUserCollections();
+      const isFv = state.favorites.some(fid => fid == id);
+      document.getElementById('hover-preview-fav-icon').className = isFv ? 'w-4 h-4 fill-pink-500 text-pink-500' : 'w-4 h-4 text-white';
+    }
+    function triggerPreviewWatchlist() {
+      const id = activeHoverMovieId;
+      const idx = state.watchlist.indexOf(id);
+      if (idx > -1) state.watchlist.splice(idx, 1);
+      else state.watchlist.push(id);
+      saveUserCollections();
+      const isWl = state.watchlist.some(wid => wid == id);
+      document.getElementById('hover-preview-wl-icon').setAttribute('data-lucide', isWl ? 'check' : 'plus');
+      lucide.createIcons();
+    }
+
+    // Recently watched
+    function saveRecentlyWatched(movieId) {
+      let watched = [];
+      try { watched = JSON.parse(localStorage.getItem('cf_recently_watched')) || []; } catch(e) {}
+      watched = watched.filter(id => id != movieId);
+      watched.unshift(movieId);
+      watched = watched.slice(0, 10);
+      localStorage.setItem('cf_recently_watched', JSON.stringify(watched));
+      renderRecentlyWatchedRow();
+    }
+
+    function renderRecentlyWatchedRow() {
+      let watched = [];
+      try { watched = JSON.parse(localStorage.getItem('cf_recently_watched')) || []; } catch(e) {}
+      const container = document.getElementById('recently-watched-container');
+      const row = document.getElementById('row-recently-watched');
+
+      if (watched.length === 0) {
+        container.classList.add('hidden');
+        return;
+      }
+      container.classList.remove('hidden');
+
+      let html = '';
+      watched.forEach(id => {
+        const m = movieCatalog.find(mv => mv.id == id);
+        if (m) {
+          const progress = Math.floor(Math.random() * 55) + 20; // Simulated Continue watching progress
+          html += `
+            <div onclick="openMovieDetails('${m.id}')" class="relative shrink-0 w-[180px] sm:w-[220px] aspect-[2/3] cursor-pointer group rounded-xl overflow-hidden glass-card shadow-glass flex flex-col p-1.5 transition-all duration-300 hover:scale-[1.03] hover:border-purple-500/40" onmouseenter="initCardHover(this, '${m.id}')" onmouseleave="cancelCardHover(this)">
+              <img src="${resolveImagePath(m.poster_path)}" alt="${m.title}" class="w-full h-full object-cover rounded-lg" onerror="handleImageError(this)">
+              <div class="absolute inset-0 bg-gradient-to-t from-space-950 via-transparent to-black/30 opacity-60 rounded-lg"></div>
+              
+              <div class="absolute bottom-1.5 left-2.5 right-2.5 h-1 bg-white/20 rounded-full overflow-hidden z-20 border border-white/5">
+                <div class="h-full bg-red-600 rounded-full shadow-neon-purple" style="width: ${progress}%"></div>
+              </div>
+              
+              <div class="absolute bottom-4 left-3 right-3 z-10 text-left">
+                <h4 class="text-white text-xs sm:text-sm font-bold truncate">${m.title}</h4>
+                <div class="flex items-center justify-between mt-0.5 text-[9px] text-gray-400 font-extrabold uppercase">
+                  <span>Resume</span>
+                  <span class="text-red-500">${progress}%</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      });
+      row.innerHTML = html;
+    }
+
+    // Dynamic color matching skeletons
+    function showDetailSkeletons() {
+      document.getElementById('modal-cast-row-live').innerHTML = Array(4).fill().map(() => `
+        <div class="glass-card rounded-xl p-2 shrink-0 w-24 animate-pulse flex flex-col items-center">
+          <div class="w-12 h-12 rounded-full bg-white/5"></div>
+          <div class="h-3 bg-white/10 rounded w-3/4 mt-2"></div>
+        </div>
+      `).join('');
+      document.getElementById('modal-similar-row').innerHTML = '';
+      document.getElementById('modal-franchise-row-timeline').innerHTML = '';
+      document.getElementById('modal-scenes-carousel-inner').innerHTML = '';
+    }
+
+    // Movie details modal live synchronizer
+    const openMovieDetails = async (movieId) => {
+      state.activeMovieId = movieId;
+      document.getElementById('movie-details-modal').classList.remove('hidden');
+
+      let movie = movieCatalog.find(m => m.id == movieId);
+      if (!movie) return;
+
+      document.getElementById('modal-banner-img').src = resolveImagePath(movie.backdrop_path || movie.poster_path, 'original');
+      document.getElementById('modal-title').innerText = movie.title;
+      document.getElementById('modal-vote').innerText = `★ ${Number(movie.vote_average).toFixed(1)}`;
+      document.getElementById('modal-year').innerText = movie.release_date ? movie.release_date.split('-')[0] : '2024';
+      document.getElementById('modal-genre-tag').innerText = (movie.genres && movie.genres.length > 0) ? movie.genres[0] : 'Drama';
+      document.getElementById('modal-overview').innerText = movie.overview;
+      document.getElementById('modal-director').innerText = movie.director || 'Jon Favreau';
+
+      saveRecentlyWatched(movieId);
+      updateModalSaveLabels();
+      renderMovieReviews();
+      showDetailSkeletons();
+
+      const [details, videos, credits, images, similar] = await Promise.all([
+        fetchTMDB(`/movie/${movieId}`),
+        fetchTMDB(`/movie/${movieId}/videos`),
+        fetchTMDB(`/movie/${movieId}/credits`),
+        fetchTMDB(`/movie/${movieId}/images`),
+        fetchTMDB(`/movie/${movieId}/similar`)
+      ]);
+
+      if (details) {
+        movie.genres = details.genres ? details.genres.map(g => g.name) : [];
+        movie.backdrop_path = details.backdrop_path;
+        movie.poster_path = details.poster_path;
+        document.getElementById('modal-genre-tag').innerText = movie.genres.join(' • ');
+      }
+
+      let trailerKey = '';
+      if (videos && videos.results) {
+        const trailer = videos.results.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+        if (trailer) {
+          trailerKey = trailer.key;
+          movie.trailer_url = `https://www.youtube.com/embed/${trailer.key}`;
+        }
+      }
+      
+      const trailerBlock = document.getElementById('modal-trailer-player-block');
+      if (trailerKey) {
+        trailerBlock.classList.remove('hidden');
+        document.getElementById('modal-trailer-iframe').src = `https://www.youtube.com/embed/${trailerKey}?rel=0`;
+        document.getElementById('modal-play-trailer').onclick = () => openTrailerModal(movie.trailer_url);
+      } else {
+        trailerBlock.classList.add('hidden');
+        document.getElementById('modal-trailer-iframe').src = '';
+      }
+
+      let castHTML = '';
+      if (credits && credits.cast) {
+        const topCast = credits.cast.slice(0, 8);
+        topCast.forEach(c => {
+          const avatarSrc = c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : '';
+          castHTML += `
+            <div class="glass-card rounded-xl p-2 text-center flex flex-col items-center justify-start border border-white/5 shrink-0 w-24">
+              ${avatarSrc 
+                ? `<img src="${avatarSrc}" alt="${c.name}" class="w-12 h-12 rounded-full object-cover border border-purple-500/35 mb-1.5 shadow-neon-purple" onerror="handleImageError(this)">`
+                : `<div class="w-12 h-12 rounded-full bg-purple-600/25 flex items-center justify-center text-purple-400 font-bold text-sm uppercase mb-1.5">${c.name[0]}</div>`
+              }
+              <span class="text-white text-[10px] font-bold block truncate w-full">${c.name}</span>
+              <span class="text-gray-400 text-[8px] block truncate w-full mt-0.5">${c.character}</span>
+            </div>
+          `;
+        });
+        const directorObj = credits.crew.find(cr => cr.job === 'Director');
+        if (directorObj) {
+          movie.director = directorObj.name;
+          document.getElementById('modal-director').innerText = directorObj.name;
+        }
+      } else {
+        castHTML = '<div class="text-[10px] text-gray-500">Live credits fetch unavailable</div>';
+      }
+      document.getElementById('modal-cast-row-live').innerHTML = castHTML;
+
+      let screenshotsHTML = '';
+      if (images && images.backdrops && images.backdrops.length > 0) {
+        const list = images.backdrops.slice(0, 6);
+        list.forEach((img, idx) => {
+          screenshotsHTML += `
+            <div class="carousel-slide shrink-0 w-full relative group">
+              <img src="https://image.tmdb.org/t/p/w780${img.file_path}" alt="Scene ${idx + 1}" class="w-full h-[180px] sm:h-[260px] object-cover rounded-xl border border-white/5" onerror="handleImageError(this)">
+              <div class="absolute bottom-2.5 right-2.5 bg-black/65 border border-white/10 text-white text-[9px] px-2 py-0.5 rounded font-mono">Scene ${idx + 1}</div>
+            </div>
+          `;
+        });
+        document.getElementById('modal-scenes-carousel-inner').innerHTML = screenshotsHTML;
+        document.getElementById('modal-scenes-carousel-box').classList.remove('hidden');
+        initScenesCarouselControllers();
+      } else {
+        document.getElementById('modal-scenes-carousel-box').classList.add('hidden');
+      }
+
+      const franchiseBox = document.getElementById('modal-franchise-timeline-box');
+      if (details && details.belongs_to_collection) {
+        const colDetails = await fetchTMDB(`/collection/${details.belongs_to_collection.id}`);
+        if (colDetails && colDetails.parts) {
+          franchiseBox.classList.remove('hidden');
+          document.getElementById('modal-franchise-title').innerText = `${details.belongs_to_collection.name} Chronology`;
+          
+          const sortedParts = colDetails.parts
+            .filter(p => p.release_date)
+            .sort((a, b) => new Date(a.release_date) - new Date(b.release_date));
+
+          let timelineHTML = '';
+          sortedParts.forEach((part, idx) => {
+            const isCurrent = part.id == movieId;
+            timelineHTML += `
+              <div onclick="openMovieDetails('${part.id}')" class="relative flex flex-col items-center shrink-0 cursor-pointer group text-center ${isCurrent ? 'scale-105 pointer-events-none' : ''}">
+                <div class="w-16 sm:w-20 aspect-[2/3] rounded-lg overflow-hidden border ${isCurrent ? 'border-purple-500 shadow-neon-purple ring-2 ring-purple-500/25' : 'border-white/10 group-hover:border-purple-500/50'} relative transition-all">
+                  <img src="${resolveImagePath(part.poster_path, 'w185')}" alt="${part.title}" class="w-full h-full object-cover" onerror="handleImageError(this)">
+                  ${isCurrent ? `<div class="absolute inset-0 bg-purple-600/25 flex items-center justify-center"><span class="bg-purple-600 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded">Active</span></div>` : ''}
+                </div>
+                <span class="text-white text-[9px] font-bold block truncate max-w-[80px] mt-1.5 uppercase">${part.title}</span>
+                <span class="text-purple-400 text-[8px] font-extrabold block uppercase mt-0.5">${part.release_date.split('-')[0]}</span>
+                ${idx < sortedParts.length - 1 ? `<div class="absolute -right-5 top-1/3 w-4 border-t border-dashed border-white/20 hidden sm:block"></div>` : ''}
+              </div>
+            `;
+          });
+          document.getElementById('modal-franchise-row-timeline').innerHTML = timelineHTML;
+        } else {
+          franchiseBox.classList.add('hidden');
+        }
+      } else {
+        franchiseBox.classList.add('hidden');
+      }
+
+      let similarHTML = '';
+      if (similar && similar.results && similar.results.length > 0) {
+        const list = similar.results.slice(0, 10);
+        list.forEach(m => {
+          similarHTML += `
+            <div onclick="openMovieDetails('${m.id}')" class="w-[100px] sm:w-[120px] shrink-0 rounded-xl overflow-hidden glass-card cursor-pointer border border-white/5 group hover:border-purple-500/30 transition-all flex flex-col p-1">
+              <img src="${resolveImagePath(m.poster_path, 'w185')}" alt="${m.title}" class="w-full aspect-[2/3] object-cover rounded-lg group-hover:scale-102 transition-transform" onerror="handleImageError(this)">
+              <div class="p-1 text-[8px] text-center truncate font-bold text-white group-hover:text-purple-400 mt-1 uppercase">${m.title}</div>
+            </div>
+          `;
+        });
+        document.getElementById('modal-similar-row').innerHTML = similarHTML;
+        document.getElementById('modal-similar-box').classList.remove('hidden');
+      } else {
+        document.getElementById('modal-similar-box').classList.add('hidden');
+      }
+
+      const streams = ['Netflix', 'Disney+', 'Prime Video', 'Apple TV', 'Max'];
+      let streamHTML = '';
+      streams.forEach(s => {
+        const badges = {
+          'Netflix': 'bg-red-600/10 border-red-500/30 text-red-500',
+          'Disney+': 'bg-blue-600/10 border-blue-500/30 text-blue-400',
+          'Prime Video': 'bg-cyan-600/10 border-cyan-500/30 text-cyan-400',
+          'Apple TV': 'bg-gray-400/10 border-gray-400/30 text-white',
+          'Max': 'bg-indigo-600/10 border-indigo-500/30 text-indigo-400'
+        };
+        streamHTML += `<span class="border rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-wider ${badges[s]} flex items-center gap-1 shadow-sm"><i data-lucide="tv" class="w-3 h-3"></i> ${s}</span>`;
+      });
+      document.getElementById('modal-streaming-row').innerHTML = streamHTML;
+      lucide.createIcons();
+    };
+
+    const closeMovieDetails = () => {
+      document.getElementById('movie-details-modal').classList.add('hidden');
+      document.getElementById('modal-trailer-iframe').src = '';
+      state.activeMovieId = null;
+    };
+
+    let currentCarouselIndex = 0;
+    function initScenesCarouselControllers() {
+      currentCarouselIndex = 0;
+      document.getElementById('modal-scenes-carousel-inner').style.transform = 'translateX(0%)';
+    }
+    function slideScenes(direction) {
+      const inner = document.getElementById('modal-scenes-carousel-inner');
+      const slides = inner.querySelectorAll('.carousel-slide');
+      if (slides.length === 0) return;
+      currentCarouselIndex = (currentCarouselIndex + direction + slides.length) % slides.length;
+      inner.style.transform = `translateX(-${currentCarouselIndex * 100}%)`;
+    }
+
+    const updateModalSaveLabels = () => {
+      const wlBtn = document.getElementById('modal-watchlist-btn');
+      const fvBtn = document.getElementById('modal-favorite-btn');
+      
+      const isWl = state.watchlist.some(id => id == state.activeMovieId);
+      const isFv = state.favorites.some(id => id == state.activeMovieId);
+
+      wlBtn.innerHTML = isWl 
+        ? `<i data-lucide="check" class="w-3.5 h-3.5 text-purple-400"></i><span>Watchlisted</span>`
+        : `<i data-lucide="plus" class="w-3.5 h-3.5"></i><span>Watchlist</span>`;
+      fvBtn.innerHTML = isFv
+        ? `<i data-lucide="heart" class="w-3.5 h-3.5 fill-pink-500 text-pink-500"></i><span>Favorited</span>`
+        : `<i data-lucide="heart" class="w-3.5 h-3.5"></i><span>Favorite</span>`;
+      lucide.createIcons();
+    };
+
+    const toggleWatchlistModal = () => {
+      if (!state.isAuthenticated) return openAuthModal();
+      const idx = state.watchlist.indexOf(state.activeMovieId);
+      if (idx > -1) state.watchlist.splice(idx, 1);
+      else state.watchlist.push(state.activeMovieId);
+      updateModalSaveLabels();
+      saveUserCollections();
+    };
+
+    const toggleFavoriteModal = () => {
+      if (!state.isAuthenticated) return openAuthModal();
+      const idx = state.favorites.indexOf(state.activeMovieId);
+      if (idx > -1) state.favorites.splice(idx, 1);
+      else state.favorites.push(state.activeMovieId);
+      updateModalSaveLabels();
+      saveUserCollections();
+    };
+
+    const saveUserCollections = () => {
+      if (state.user) {
+        state.user.watchlist = state.watchlist.map(id => {
+          const m = movieCatalog.find(mv => mv.id == id);
+          return { movieId: id, title: m.title, posterPath: m.poster_path };
+        });
+        state.user.favorites = state.favorites.map(id => {
+          const m = movieCatalog.find(mv => mv.id == id);
+          return { movieId: id, title: m.title, posterPath: m.poster_path };
+        });
+        localStorage.setItem('cf_user', JSON.stringify(state.user));
+        
+        document.getElementById('watchlist-count').innerText = state.watchlist.length;
+        document.getElementById('favorites-count').innerText = state.favorites.length;
+        renderProfileTabContent();
+      }
+    };
+
+    // Reviews list
+    const movieReviewsMemory = {};
+    const renderMovieReviews = () => {
+      const list = movieReviewsMemory[state.activeMovieId] || [
+        { userName: "ScreenCore", comment: "Incredible performances and legendary ambient soundscapes! Strongly recommended.", rating: 9 },
+        { userName: "Cinephile99", comment: "Outstanding visual scopes and deep character pacing.", rating: 8 }
+      ];
+      let html = '';
+      list.forEach(r => {
+        html += `
+          <div class="bg-white/5 border border-white/5 rounded-xl p-2.5 space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="text-[10px] font-bold text-white">${r.userName}</span>
+              <span class="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[8px] font-black px-1.5 rounded">★ ${r.rating}</span>
+            </div>
+            <p class="text-[10px] text-gray-300 leading-normal font-light">${r.comment}</p>
+          </div>
+        `;
+      });
+      document.getElementById('modal-reviews-list').innerHTML = html;
+    };
+
+    const postMovieReview = () => {
+      if (!state.isAuthenticated) return openAuthModal();
+      const input = document.getElementById('modal-comment-input');
+      const comment = input.value.trim();
+      if (!comment) return;
+
+      const rev = {
+        userName: state.user.name,
+        comment,
+        rating: 9
+      };
+
+      if (!movieReviewsMemory[state.activeMovieId]) movieReviewsMemory[state.activeMovieId] = [];
+      movieReviewsMemory[state.activeMovieId].unshift(rev);
+      input.value = '';
+      renderMovieReviews();
+
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        colors: ['#a855f7', '#06b6d4', '#ec4899']
+      });
+    };
+
+    // YouTube popup trailer modal
+    const openTrailerModal = (url) => {
+      document.getElementById('youtube-modal').classList.remove('hidden');
+      document.getElementById('youtube-iframe').src = url ? `${url}?autoplay=1` : "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1";
+    };
+
+    const closeTrailerModal = () => {
+      document.getElementById('youtube-modal').classList.add('hidden');
+      document.getElementById('youtube-iframe').src = '';
+    };
+
+    // Signin login routines
+    const openAuthModal = () => { document.getElementById('auth-modal').classList.remove('hidden'); };
+    const closeAuthModal = () => { document.getElementById('auth-modal').classList.add('hidden'); };
+
+    const handleAuthLogin = (e) => {
+      e.preventDefault();
+      const email = document.getElementById('auth-email-input').value.trim();
+      
+      const user = {
+        name: "Cinephile Guest",
+        email: email,
+        avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80",
+        watchlist: [],
+        favorites: []
+      };
+
+      state.isAuthenticated = true;
+      state.user = user;
+      state.watchlist = [];
+      state.favorites = [];
+
+      localStorage.setItem('cf_user', JSON.stringify(user));
+      localStorage.setItem('cf_token', 'mock_token');
+
+      closeAuthModal();
+      updateNavAuthBlock();
+      
+      document.getElementById('profile-name').innerText = user.name;
+      document.getElementById('profile-email').innerText = user.email;
+      document.getElementById('profile-avatar').src = user.avatar;
+
+      confetti({
+        particleCount: 80,
+        spread: 80,
+        colors: ['#a855f7', '#06b6d4']
+      });
+    };
+
+    const updateNavAuthBlock = () => {
+      const block = document.getElementById('auth-nav-block');
+      if (state.isAuthenticated) {
+        block.innerHTML = `
+          <div class="relative group">
+            <button class="w-8 h-8 rounded-full overflow-hidden border border-purple-500/40 shadow-neon-purple">
+              <img src="${state.user.avatar}" alt="Avatar" class="w-full h-full object-cover" onerror="handleImageError(this)">
+            </button>
+            <div class="absolute right-0 top-full mt-2 w-48 glass-card border border-white/10 rounded-xl overflow-hidden shadow-2xl p-1 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all text-left z-50 space-y-0.5">
+              <div class="px-3 py-2 border-b border-white/5 mb-1 text-xs">
+                <span class="font-extrabold text-white block truncate">${state.user.name}</span>
+                <span class="text-gray-400 text-[10px] block truncate">${state.user.email}</span>
+              </div>
+              <button onclick="navigateTab('profile'); renderProfileTabContent();" class="w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-white/5 rounded-lg flex items-center gap-2">
+                <i data-lucide="user" class="w-3.5 h-3.5"></i> Profile
+              </button>
+              <button onclick="navigateTab('admin')" class="w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-white/5 rounded-lg flex items-center gap-2">
+                <i data-lucide="shield" class="w-3.5 h-3.5"></i> Dashboard
+              </button>
+              <button onclick="handleLogout()" class="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10 rounded-lg flex items-center gap-2 border-t border-white/5 mt-1">
+                <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Logout
+              </button>
+            </div>
+          </div>
+        `;
+        lucide.createIcons();
+      }
+    };
+
+    const handleLogout = () => {
+      localStorage.clear();
+      state.isAuthenticated = false;
+      state.user = null;
+      state.watchlist = [];
+      state.favorites = [];
+      
+      block = document.getElementById('auth-nav-block');
+      block.innerHTML = `
+        <button onclick="openAuthModal()" class="px-4 py-1.5 text-xs font-bold rounded-full border border-purple-500/40 bg-purple-500/10 text-white shadow-neon-purple hover:bg-purple-600 transition-all flex items-center gap-1.5">
+          <i data-lucide="user" class="w-3.5 h-3.5"></i>
+          <span>Sign In</span>
+        </button>
+      `;
+      lucide.createIcons();
+      navigateTab('home');
+    };
+
+    // Navigation Tabs Router
+    const navigateTab = (tabId) => {
+      document.querySelectorAll('.tab-view').forEach(t => t.classList.add('hidden'));
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      state.activeTab = tabId;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const setProfileTab = (tab) => {
+      state.activeProfileTab = tab;
+      document.getElementById('prof-btn-watchlist').className = tab === 'watchlist' 
+        ? "text-xs font-bold uppercase tracking-wider text-white border-b-2 border-purple-500 pb-1"
+        : "text-xs font-bold uppercase tracking-wider text-gray-500 pb-1";
+      document.getElementById('prof-btn-favorites').className = tab === 'favorites' 
+        ? "text-xs font-bold uppercase tracking-wider text-white border-b-2 border-purple-500 pb-1"
+        : "text-xs font-bold uppercase tracking-wider text-gray-500 pb-1";
+
+      renderProfileTabContent();
+    };
+
+    const renderProfileTabContent = () => {
+      const items = state.activeProfileTab === 'watchlist' ? state.watchlist : state.favorites;
+      const grid = document.getElementById('profile-tab-grid');
+      const empty = document.getElementById('profile-tab-empty');
+
+      if (items.length > 0) {
+        grid.classList.remove('hidden');
+        empty.classList.add('hidden');
+        let html = '';
+        items.forEach(id => {
+          const m = movieCatalog.find(mv => mv.id == id);
+          if (m) {
+            html += `
+              <div onclick="openMovieDetails('${m.id}')" class="relative w-full aspect-[2/3] cursor-pointer group rounded-xl overflow-hidden glass-card flex flex-col p-1.5 hover:border-purple-500/40 hover:scale-[1.02] duration-300">
+                <img src="${resolveImagePath(m.poster_path)}" alt="${m.title}" class="w-full h-full object-cover rounded-lg" onerror="handleImageError(this)">
+              </div>
+            `;
+          }
+        });
+        grid.innerHTML = html;
+      } else {
+        grid.classList.add('hidden');
+        empty.classList.remove('hidden');
+      }
+    };
+
+    // SEARCH ENGINES & Suggesters
+    const handleSearch = (e) => {
+      if (e) e.preventDefault();
+      const val = document.getElementById('search-input').value.trim();
+      if (!val) return;
+
+      document.getElementById('suggestions-box').classList.add('hidden');
+      document.getElementById('search-query-value').innerText = `"${val}"`;
+      navigateTab('search');
+
+      const qLower = val.toLowerCase();
+      let results = [...movieCatalog];
+      let isTimeline = false;
+
+      // Chronological timelines mappings
+      if (qLower === 'marvel' || qLower === 'mcu' || qLower === 'avengers') {
+        results = movieCatalog.filter(m => (m.keywords && m.keywords.includes('marvel')) || (m.title && (m.title.toLowerCase().includes('iron man') || m.title.toLowerCase().includes('avengers') || m.title.toLowerCase().includes('thor'))));
+        isTimeline = true;
+      } else if (qLower.includes('potter') || qLower === 'harry') {
+        results = movieCatalog.filter(m => (m.keywords && m.keywords.includes('harry potter')) || (m.title && m.title.toLowerCase().includes('harry potter')));
+        isTimeline = true;
+      } else if (qLower.includes('avatar')) {
+        results = movieCatalog.filter(m => (m.keywords && m.keywords.includes('avatar')) || (m.title && m.title.toLowerCase().includes('avatar')));
+        isTimeline = true;
+      } else if (qLower === 'dc' || qLower === 'dc comics' || qLower === 'gotham') {
+        results = movieCatalog.filter(m => (m.keywords && m.keywords.includes('dc')) || (m.title && (m.title.toLowerCase().includes('dark knight') || m.title.toLowerCase().includes('joker'))));
+        isTimeline = true;
+      } else if (qLower.includes('fast') || qLower.includes('furious')) {
+        results = movieCatalog.filter(m => (m.keywords && m.keywords.includes('fast & furious')) || (m.title && (m.title.toLowerCase().includes('fast') || m.title.toLowerCase().includes('furious'))));
+        isTimeline = true;
+      } else {
+        results = movieCatalog.filter(m => 
+          (m.title && m.title.toLowerCase().includes(qLower)) || 
+          (m.overview && m.overview.toLowerCase().includes(qLower)) || 
+          (m.genres && m.genres.some(g => g.toLowerCase().includes(qLower)))
+        );
+      }
+
+      if (results.length > 0) {
+        document.getElementById('search-empty-box').classList.add('hidden');
+        if (isTimeline) {
+          document.getElementById('timeline-badge').classList.remove('hidden');
+          document.getElementById('search-grid').classList.add('hidden');
+          document.getElementById('search-timeline-container').classList.remove('hidden');
+
+          // Sort timeline chronologically
+          results.sort((a, b) => {
+            const dateA = a.release_date ? new Date(a.release_date) : new Date(0);
+            const dateB = b.release_date ? new Date(b.release_date) : new Date(0);
+            return dateA - dateB;
+          });
+
+          let timelineHTML = '';
+          results.forEach((movie, idx) => {
+            timelineHTML += `
+              <div class="relative flex flex-col md:flex-row gap-6 items-start animate-fade-in">
+                <div class="absolute -left-[35px] sm:-left-[51px] top-1.5 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-space-950 border border-purple-500 flex items-center justify-center text-[10px] sm:text-xs font-black text-purple-400 shadow-neon-purple">${idx + 1}</div>
+                
+                <div onclick="openMovieDetails('${movie.id}')" class="relative shrink-0 w-[180px] sm:w-[220px] aspect-[2/3] cursor-pointer group rounded-xl overflow-hidden glass-card p-1.5 hover:border-purple-500/40 hover:scale-[1.02] duration-300">
+                  <img src="${resolveImagePath(movie.poster_path)}" alt="${movie.title}" class="w-full h-full object-cover rounded-lg" onerror="handleImageError(this)">
+                </div>
+
+                <div class="flex-1 max-w-xl space-y-2 mt-2">
+                  <span class="bg-purple-900/40 text-purple-300 border border-purple-700/30 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Timeline Release: ${movie.release_date ? movie.release_date.split('-')[0] : '2024'}</span>
+                  <h3 class="text-lg sm:text-xl font-bold text-white uppercase">${movie.title}</h3>
+                  <p class="text-gray-400 text-xs sm:text-sm font-light leading-relaxed">${movie.overview}</p>
+                </div>
+              </div>
+            `;
+          });
+          document.getElementById('search-timeline-container').innerHTML = timelineHTML;
+        } else {
+          document.getElementById('timeline-badge').classList.add('hidden');
+          document.getElementById('search-timeline-container').classList.add('hidden');
+          document.getElementById('search-grid').classList.remove('hidden');
+
+          let gridHTML = '';
+          results.forEach(m => {
+            gridHTML += `
+              <div onclick="openMovieDetails('${m.id}')" class="relative w-full aspect-[2/3] cursor-pointer group rounded-xl overflow-hidden glass-card flex flex-col p-1.5 hover:scale-[1.02] duration-300">
+                <img src="${resolveImagePath(m.poster_path)}" alt="${m.title}" class="w-full h-full object-cover rounded-lg" onerror="handleImageError(this)">
+                <div class="absolute bottom-3 left-3 right-3 z-10">
+                  <h4 class="text-white text-xs sm:text-sm font-bold truncate">${m.title}</h4>
+                </div>
+              </div>
+            `;
+          });
+          document.getElementById('search-grid').innerHTML = gridHTML;
+        }
+      } else {
+        document.getElementById('timeline-badge').classList.add('hidden');
+        document.getElementById('search-timeline-container').classList.add('hidden');
+        document.getElementById('search-grid').classList.add('hidden');
+        document.getElementById('search-empty-box').classList.remove('hidden');
+      }
+    };
+
+    const triggerFranchiseSearch = (name) => {
+      document.getElementById('search-input').value = name;
+      handleSearch();
+    };
+
+    const handleSearchSuggestions = (val) => {
+      const box = document.getElementById('suggestions-box');
+      if (val.trim().length < 2) {
+        box.classList.add('hidden');
+        return;
+      }
+
+      const qLower = val.toLowerCase();
+      const suggestions = movieCatalog
+        .filter(m => m.title.toLowerCase().includes(qLower))
+        .slice(0, 5);
+
+      if (suggestions.length > 0) {
+        box.classList.remove('hidden');
+        let html = '';
+        suggestions.forEach(s => {
+          html += `
+            <div onclick="openMovieDetails('${s.id}'); document.getElementById('suggestions-box').classList.add('hidden');" class="flex items-center gap-3 p-1.5 rounded-lg hover:bg-purple-600/25 cursor-pointer text-left">
+              <img src="${resolveImagePath(s.poster_path, 'w92')}" alt="${s.title}" class="w-8 h-12 object-cover rounded" onerror="handleImageError(this)">
+              <div class="flex-1 min-w-0">
+                <span class="text-xs sm:text-sm font-bold text-white block truncate">${s.title}</span>
+                <span class="text-[10px] text-gray-400 block">${s.release_date ? s.release_date.split('-')[0] : '2024'} • ★ ${Number(s.vote_average).toFixed(1)}</span>
+              </div>
+            </div>
+          `;
+        });
+        box.innerHTML = html;
+      } else {
+        box.classList.add('hidden');
+      }
+    };
+
+    // Immersive voice search
+    let voiceRecognition = null;
+    function startVoiceSearch() {
+      const overlay = document.getElementById('voice-overlay');
+      overlay.classList.remove('hidden');
+      lucide.createIcons();
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        document.getElementById('voice-status-text').innerText = "Voice core not supported";
+        return;
+      }
+
+      voiceRecognition = new SpeechRecognition();
+      voiceRecognition.lang = 'en-US';
+      voiceRecognition.interimResults = false;
+
+      voiceRecognition.onstart = () => {
+        document.getElementById('voice-status-text').innerText = "Listening for cinematic commands...";
+      };
+
+      voiceRecognition.onerror = () => {
+        document.getElementById('voice-status-text').innerText = "Command failed. Tap mic to retry.";
+      };
+
+      voiceRecognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        document.getElementById('search-input').value = text;
+        closeVoiceSearch();
+        handleSearch();
+      };
+
+      voiceRecognition.start();
+    }
+
+    function closeVoiceSearch() {
+      if (voiceRecognition) {
+        voiceRecognition.stop();
+      }
+      document.getElementById('voice-overlay').classList.add('hidden');
+    }
+
+    // Mood recommenders
+    const selectMood = (moodId) => {
+      document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('bg-purple-600', 'text-white'));
+      const matched = Array.from(document.querySelectorAll('.mood-btn')).find(b => b.innerText.toLowerCase().includes(moodId));
+      if (matched) matched.classList.add('bg-purple-600', 'text-white');
+
+      document.getElementById('mood-results-box').classList.remove('hidden');
+      
+      let list = [];
+      if (moodId === 'happy') list = movieCatalog.filter(m => m.genres && (m.genres.includes('Animation') || m.genres.includes('Family')));
+      else if (moodId === 'emotional') list = movieCatalog.filter(m => m.genres && (m.genres.includes('Drama') || m.genres.includes('Romance')));
+      else if (moodId === 'motivational') list = movieCatalog.filter(m => m.genres && (m.genres.includes('Drama') || m.genres.includes('Adventure')));
+      else if (moodId === 'thrilled') list = movieCatalog.filter(m => m.genres && (m.genres.includes('Action') || m.genres.includes('Science Fiction')));
+      else list = movieCatalog.slice(0, 3); // imaginative default
+
+      let html = '';
+      list.slice(0, 6).forEach(m => {
+        html += `
+          <div onclick="openMovieDetails('${m.id}')" class="flex gap-4 p-3 rounded-xl bg-white/5 border border-white/5 cursor-pointer transition-all hover:bg-purple-900/10 hover:border-purple-500/20 group">
+            <img src="${resolveImagePath(m.poster_path, 'w154')}" alt="${m.title}" class="w-16 sm:w-20 aspect-[2/3] object-cover rounded-lg group-hover:scale-105 transition-transform" onerror="handleImageError(this)">
+            <div class="flex-1 min-w-0 flex flex-col justify-between text-left">
+              <div>
+                <span class="text-xs sm:text-sm font-bold text-white block truncate">${m.title}</span>
+                <span class="text-[10px] text-purple-400 font-bold block mt-0.5">${(m.genres && m.genres.length > 0) ? m.genres[0] : 'Drama'} • ★ ${Number(m.vote_average).toFixed(1)}</span>
+                <p class="text-[10px] text-gray-400 line-clamp-2 mt-1.5 font-light leading-normal">CineFlix AI: Balanced cinematic narrative matching your exact emotional vector.</p>
+              </div>
+              <span class="text-[9px] uppercase tracking-wider font-extrabold text-cyan-300 block">🍿 AI Mood Matcher Active</span>
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById('mood-results-grid').innerHTML = html;
+    };
+
+    // Chatbot widget assistants
+    const toggleChatbot = () => {
+      const deck = document.getElementById('chatbot-deck');
+      deck.classList.toggle('hidden');
+      const isExpanded = !deck.classList.contains('hidden');
+      document.getElementById('chatbot-icon').className = isExpanded ? "w-5.5 h-5.5 hidden" : "w-5.5 h-5.5";
+      if (isExpanded) renderChatMessages();
+    };
+
+    const chatHistory = [
+      { role: 'assistant', text: "Hello! I am your **CineFlix AI Advisor**. 🍿\n\nI can suggest movies based on your customized mood or favorite directors. Try asking me:\n* *“Suggest me cosmic science fiction like Interstellar”*\n* *“What are the best action movies?”*" }
+    ];
+
+    const renderChatMessages = () => {
+      let html = '';
+      chatHistory.forEach(m => {
+        const isUser = m.role === 'user';
+        let textParsed = m.text;
+        textParsed = textParsed.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-white">$1</strong>');
+        textParsed = textParsed.replace(/\* (.*?)\n/g, '• $1<br>');
+        textParsed = textParsed.replace(/\*(.*?)\*/g, '<em class="italic text-gray-400">$1</em>');
+        textParsed = textParsed.replace(/\n/g, '<br>');
+
+        html += `
+          <div class="flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in">
+            <div class="max-w-[85%] rounded-2xl px-3 py-2 text-xs sm:text-sm leading-relaxed text-left ${
+              isUser
+                ? 'bg-purple-600 text-white rounded-tr-none shadow-neon-purple border border-purple-500/30'
+                : 'bg-white/5 border border-white/5 text-gray-300 rounded-tl-none font-light'
+            }">
+              <div>${textParsed}</div>
+              ${m.movies ? renderChatMoviesList(m.movies) : ''}
+            </div>
+          </div>
+        `;
+      });
+      const logs = document.getElementById('chatbot-logs');
+      logs.innerHTML = html;
+      logs.scrollTop = logs.scrollHeight;
+    };
+
+    const renderChatMoviesList = (list) => {
+      let html = '<div class="mt-3 border-t border-white/5 pt-2 space-y-2">';
+      list.forEach(m => {
+        html += `
+          <div onclick="openMovieDetails('${m.id}'); toggleChatbot();" class="flex items-center gap-2 p-1.5 rounded-lg bg-white/5 hover:bg-purple-500/20 cursor-pointer transition-colors text-left border border-white/5">
+            <img src="${resolveImagePath(m.poster_path, 'w92')}" alt="${m.title}" class="w-8 h-12 rounded object-cover" onerror="handleImageError(this)">
+            <div class="flex-1 min-w-0">
+              <span class="text-[11px] font-bold text-white block truncate">${m.title}</span>
+              <span class="text-[9px] text-gray-400 block">${(m.genres && m.genres.length > 0) ? m.genres[0] : 'Drama'} • ★ ${Number(m.vote_average).toFixed(1)}</span>
+            </div>
+            <i data-lucide="play" class="w-3 h-3 text-purple-400 fill-purple-400"></i>
+          </div>
+        `;
+      });
+      html += '</div>';
+      return html;
+    };
+
+    const getMovieChatResponse = async (movie) => {
+      // Fetch full details and credits from TMDB dynamically to enrich chatbot answers!
+      const [details, credits] = await Promise.all([
+        fetchTMDB(`/movie/${movie.id}`),
+        fetchTMDB(`/movie/${movie.id}/credits`)
+      ]);
+
+      let runtime = movie.runtime || (details ? details.runtime : null) || '124';
+      let tagline = details ? details.tagline : '';
+      let vote = details ? details.vote_average : movie.vote_average;
+      let overview = details ? details.overview : movie.overview;
+      let release = details ? details.release_date : movie.release_date;
+      let genres = details ? details.genres.map(g => g.name).join(' • ') : (movie.genres ? movie.genres.join(' • ') : 'Drama');
+
+      let directorName = 'Unknown';
+      let castList = [];
+
+      if (credits) {
+        const dir = credits.crew.find(c => c.job === 'Director');
+        if (dir) directorName = dir.name;
+        castList = credits.cast.slice(0, 5).map(c => `• **${c.name}** as *${c.character}*`);
+      } else {
+        directorName = movie.director || 'Jon Favreau';
+        castList = (movie.cast || []).map(name => `• **${name}**`);
+      }
+
+      if (castList.length === 0) {
+        castList = ['• Cast details loading...'];
+      }
+
+      const year = release ? release.split('-')[0] : '2024';
+
+      let text = `🎬 **${movie.title} (${year})**\n`;
+      if (tagline) text += `*"${tagline}"*\n\n`;
+      else text += `\n`;
+
+      text += `⭐ **Rating**: ${Number(vote).toFixed(1)}/10\n`;
+      text += `⏱️ **Duration**: ${runtime} minutes\n`;
+      text += `🏷️ **Genres**: ${genres}\n`;
+      text += `📣 **Director**: ${directorName}\n\n`;
+      text += `📝 **Summary**:\n${overview}\n\n`;
+      text += `👥 **Main Cast & Characters**:\n${castList.join('\n')}\n\n`;
+      
+      const platforms = movie.streaming_platforms ? movie.streaming_platforms.join(', ') : 'Netflix, Disney+, Prime Video';
+      text += `📺 **Where to Stream**: ${platforms}\n\n`;
+      text += `👇 Click the movie card below to watch its trailer or details!`;
+
+      return text;
+    };
+
+    const handleChatbotSubmit = (e) => {
+      e.preventDefault();
+      const input = document.getElementById('chatbot-input');
+      const val = input.value.trim();
+      if (!val) return;
+
+      chatHistory.push({ role: 'user', text: val });
+      input.value = '';
+      renderChatMessages();
+
+      setTimeout(async () => {
+        const queryLower = val.toLowerCase();
+        let reply = "Hello! I am your CineFlix AI assistant. Try asking me about 'space movies', 'action blockbusters', or search for any movie in the world by its name!";
+        let recommended = [];
+
+        // Check if query is asking about a specific movie (fuzzy search in catalog)
+        let matchedMovie = null;
+
+        for (const m of movieCatalog) {
+          if (queryLower.includes(m.title.toLowerCase()) || m.title.toLowerCase().includes(queryLower)) {
+            matchedMovie = m;
+            break;
+          }
+        }
+
+        // If not found locally, and not a generic query, search TMDB dynamically!
+        const isGenericQuery = queryLower.includes('suggest') || queryLower.includes('recommend') || queryLower.includes('best') || queryLower.includes('mood') || queryLower.includes('list') || queryLower.includes('movies');
+        
+        if (!matchedMovie && !isGenericQuery && val.length > 2) {
+          const searchRes = await fetchTMDB('/search/movie', { query: val });
+          if (searchRes && searchRes.results && searchRes.results.length > 0) {
+            const firstResult = searchRes.results[0];
+            if (queryLower.includes(firstResult.title.toLowerCase()) || firstResult.title.toLowerCase().includes(queryLower) || val.length < 25) {
+              addOrUpdateCatalog(firstResult);
+              matchedMovie = movieCatalog.find(item => item.id == firstResult.id);
+            }
+          }
+        }
+
+        if (matchedMovie) {
+          reply = await getMovieChatResponse(matchedMovie);
+          recommended = [matchedMovie];
+        } else {
+          // Standard recommendation rules
+          if (queryLower.includes('interstellar') || queryLower.includes('space') || queryLower.includes('nolan')) {
+            reply = "Ah, cosmic exploration! If you love Nolan's spacetime relativity and visual scale in **Interstellar**, you'll love **Inception** (subconscious dream heist) and **Avatar: The Way of Water** (spectacular depths of Pandora)!";
+            recommended = [movieCatalog.find(m => m.id === "27205"), movieCatalog.find(m => m.id === "76600")].filter(Boolean);
+          } else if (queryLower.includes('action') || queryLower.includes('marvel')) {
+            reply = "High-octane blockbusters! Check out **Iron Man** (Tony Stark's suit origin) and **The Dark Knight** (Nolan's legendary DC masterpiece). Absolutely spectacular!";
+            recommended = [movieCatalog.find(m => m.id === "1726"), movieCatalog.find(m => m.id === "155")].filter(Boolean);
+          } else if (queryLower.includes('anime') || queryLower.includes('japan')) {
+            reply = "Japanese anime offers gorgeous storytelling! Check out **Your Name.** (makoto shinkai's cosmic body swap romance) and **Spirited Away** (miyazaki's bathhouse classic).";
+            recommended = [movieCatalog.find(m => m.id === "372058"), movieCatalog.find(m => m.id === "129")].filter(Boolean);
+          }
+        }
+
+        chatHistory.push({ role: 'assistant', text: reply, movies: recommended });
+        renderChatMessages();
+        lucide.createIcons();
+      }, 700);
+    };
+
+    // Immersive background particles
+    let canvas, ctx, particles = [];
+    const initCanvasParticles = () => {
+      canvas = document.getElementById('particle-canvas');
+      ctx = canvas.getContext('2d');
+      const resize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      };
+      window.addEventListener('resize', resize);
+      resize();
+
+      for (let i = 0; i < 45; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 2 + 0.5,
+          vx: Math.random() * 0.4 - 0.2,
+          vy: Math.random() * 0.4 - 0.2,
+          alpha: Math.random() * 0.4 + 0.1,
+          color: Math.random() > 0.5 ? '#8b5cf6' : '#06b6d4'
+        });
+      }
+
+      const draw = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+          if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = p.color;
+          ctx.fill();
+          ctx.restore();
+        });
+
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 110) {
+              ctx.beginPath();
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.strokeStyle = `rgba(168, 85, 247, ${(1 - dist / 110) * 0.05})`;
+              ctx.stroke();
+            }
+          }
+        }
+        requestAnimationFrame(draw);
+      };
+      draw();
+    };
+
+    // Immersive cursor
+    const initCursorEffect = () => {
+      const cursor = document.getElementById('custom-cursor');
+      if ('ontouchstart' in window) return;
+      cursor.classList.remove('hidden');
+
+      window.addEventListener('mousemove', (e) => {
+        cursor.style.left = `${e.clientX}px`;
+        cursor.style.top = `${e.clientY}px`;
+      });
+      window.addEventListener('mousedown', () => cursor.classList.add('scale-75', 'bg-cyan-500/25'));
+      window.addEventListener('mouseup', () => cursor.classList.remove('scale-75', 'bg-cyan-500/25'));
+    };
+
+    // Terminal diagnostic logs
+    const initTerminalLogs = () => {
+      const logs = [
+        "DB Connect: Mongo Cluster verified (0.22ms)",
+        "AI Rec Engine: Personalized preference vector updated",
+        "TMDB Cache: Synchronizing 12 shelving rows",
+        "Voice core: Recognition speech model loaded successfully",
+        "CineFlix AI: Live trailers auto-play overlay compiled",
+        "System: Direct proxy bypass initialized (HTTP 200)"
+      ];
+      const box = document.getElementById('admin-terminal');
+      box.innerHTML = logs.map(l => `<div>[${new Date().toLocaleTimeString()}] ${l}</div>`).join('');
+      setInterval(() => {
+        if (state.activeTab === 'admin') {
+          const l = logs[Math.floor(Math.random() * logs.length)];
+          box.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${l}</div>`;
+          box.scrollTop = box.scrollHeight;
+        }
+      }, 4000);
+    };
+
+    const toggleTheme = () => {
+      const html = document.documentElement;
+      html.classList.toggle('dark');
+      const icon = document.getElementById('theme-icon');
+      if (html.classList.contains('dark')) icon.setAttribute('data-lucide', 'sun');
+      else icon.setAttribute('data-lucide', 'moon');
+      lucide.createIcons();
+    };
+
+    const toggleNotifications = () => {
+      const b = document.getElementById('notify-box');
+      b.classList.toggle('hidden');
+    };
+  </script>
+</body>
+</html>
